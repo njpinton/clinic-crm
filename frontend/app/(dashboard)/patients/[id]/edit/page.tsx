@@ -50,7 +50,7 @@ export default function EditPatientPage() {
                 }
             });
 
-            const updatedPatient = await updatePatient(patientId, filteredData as Partial<PatientFormValues>);
+            const updatedPatient = await updatePatient(patientId, filteredData as any);
 
             // Redirect to the updated patient's detail page
             router.push(`/patients/${updatedPatient.id}`);
