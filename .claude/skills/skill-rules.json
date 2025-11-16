@@ -1,0 +1,235 @@
+{
+    "version": "1.0",
+    "description": "Skill activation triggers for Claude Code in the Clinic CRM project. Controls when skills automatically suggest or block actions.",
+    "skills": {
+        "clinic-crm-manager": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "critical",
+            "description": "Project oversight and management for the Clinic CRM",
+            "promptTriggers": {
+                "keywords": [
+                    "project plan",
+                    "roadmap",
+                    "architecture",
+                    "project overview",
+                    "implementation plan",
+                    "hipaa",
+                    "compliance",
+                    "security requirements",
+                    "clinic crm"
+                ],
+                "intentPatterns": [
+                    "(what|how).*?(project|plan|architecture|structure)",
+                    "(implement|create|build).*?(feature|module)",
+                    "(hipaa|compliance|security).*?(requirement|check)"
+                ]
+            }
+        },
+        "django-backend-guidelines": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Django REST Framework backend development patterns for Python/Django",
+            "promptTriggers": {
+                "keywords": [
+                    "backend",
+                    "django",
+                    "rest framework",
+                    "drf",
+                    "api",
+                    "endpoint",
+                    "view",
+                    "viewset",
+                    "serializer",
+                    "model",
+                    "database",
+                    "orm",
+                    "permission",
+                    "authentication",
+                    "middleware",
+                    "celery"
+                ],
+                "intentPatterns": [
+                    "(create|add|implement|build).*?(api|endpoint|view|model|serializer)",
+                    "(fix|debug|handle).*?(error|exception|backend)",
+                    "(add|implement).*?(permission|authentication|validation)",
+                    "(how to|best practice).*?(django|backend|api)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "backend/**/*.py",
+                    "apps/**/*.py",
+                    "config/**/*.py"
+                ],
+                "pathExclusions": [
+                    "**/__pycache__/**",
+                    "**/migrations/**",
+                    "**/*.pyc",
+                    "**/tests/**",
+                    "**/*test*.py"
+                ],
+                "contentPatterns": [
+                    "from rest_framework",
+                    "class.*ViewSet",
+                    "class.*Serializer",
+                    "from django.db import models",
+                    "@api_view"
+                ]
+            }
+        },
+        "nextjs-frontend-guidelines": {
+            "type": "guardrail",
+            "enforcement": "block",
+            "priority": "high",
+            "description": "Next.js 14+ React/TypeScript best practices and patterns",
+            "promptTriggers": {
+                "keywords": [
+                    "component",
+                    "react",
+                    "nextjs",
+                    "next.js",
+                    "frontend",
+                    "ui",
+                    "page",
+                    "form",
+                    "client component",
+                    "server component",
+                    "server action",
+                    "app router"
+                ],
+                "intentPatterns": [
+                    "(create|add|build|update|modify).*?(component|page|ui|form)",
+                    "(how to|best practice).*?(nextjs|react|component)",
+                    "(client|server).*?component"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "frontend/**/*.tsx",
+                    "frontend/**/*.ts",
+                    "app/**/*.tsx",
+                    "app/**/*.ts",
+                    "components/**/*.tsx",
+                    "lib/**/*.ts"
+                ],
+                "pathExclusions": [
+                    "**/*.test.tsx",
+                    "**/*.test.ts",
+                    "**/*.spec.tsx",
+                    "**/*.spec.ts",
+                    "**/node_modules/**",
+                    "**/.next/**"
+                ],
+                "contentPatterns": [
+                    "'use client'",
+                    "'use server'",
+                    "import.*from 'react'",
+                    "export default.*function",
+                    "import.*from 'next"
+                ]
+            },
+            "blockMessage": "⚠️  BLOCKED - Next.js Best Practices Required\n\n📋 REQUIRED ACTION:\n1. Use Skill tool: 'nextjs-frontend-guidelines'\n2. Review Server Component vs Client Component patterns\n3. Check Server Actions for mutations\n4. Verify proper data fetching patterns\n5. Then retry this edit\n\nReason: Enforce Next.js 14+ App Router best practices\nFile: {file_path}\n\n💡 TIP: Add '// @skip-validation' comment to skip future checks",
+            "skipConditions": {
+                "sessionSkillUsed": true,
+                "fileMarkers": [
+                    "@skip-validation"
+                ],
+                "envOverride": "SKIP_FRONTEND_GUIDELINES"
+            }
+        },
+        "django-api-tester": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Testing Django REST Framework API endpoints with authentication",
+            "promptTriggers": {
+                "keywords": [
+                    "test",
+                    "testing",
+                    "pytest",
+                    "test api",
+                    "test endpoint",
+                    "api test",
+                    "integration test",
+                    "unit test"
+                ],
+                "intentPatterns": [
+                    "(test|verify|check).*?(api|endpoint|route)",
+                    "(how to|how do I).*?test.*?(api|endpoint)",
+                    "(write|create).*?(test|tests)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/tests/**/*.py",
+                    "**/*test*.py",
+                    "**/conftest.py"
+                ],
+                "contentPatterns": [
+                    "from rest_framework.test import",
+                    "@pytest",
+                    "def test_",
+                    "class.*Test"
+                ]
+            }
+        },
+        "sentry-integration": {
+            "type": "domain",
+            "enforcement": "suggest",
+            "priority": "high",
+            "description": "Sentry error tracking and performance monitoring for Django and Next.js",
+            "promptTriggers": {
+                "keywords": [
+                    "error handling",
+                    "error tracking",
+                    "sentry",
+                    "exception",
+                    "monitoring",
+                    "capture exception",
+                    "performance monitoring"
+                ],
+                "intentPatterns": [
+                    "(add|setup|configure|implement).*?(sentry|error tracking|monitoring)",
+                    "(handle|catch|capture).*?(error|exception)",
+                    "(how to|best practice).*?(error|sentry)"
+                ]
+            },
+            "fileTriggers": {
+                "pathPatterns": [
+                    "**/sentry*.py",
+                    "**/sentry*.ts",
+                    "**/sentry*.tsx",
+                    "**/*error*.tsx",
+                    "**/*error*.ts"
+                ],
+                "contentPatterns": [
+                    "import.*sentry",
+                    "sentry_sdk",
+                    "@sentry/",
+                    "captureException",
+                    "captureMessage"
+                ]
+            }
+        }
+    },
+    "notes": {
+        "enforcement_types": {
+            "suggest": "Skill suggestion appears but doesn't block execution",
+            "block": "Requires skill to be used before proceeding (guardrail)",
+            "warn": "Shows warning but allows proceeding"
+        },
+        "priority_levels": {
+            "critical": "Highest - Always trigger when matched",
+            "high": "Important - Trigger for most matches",
+            "medium": "Moderate - Trigger for clear matches",
+            "low": "Optional - Trigger only for explicit matches"
+        },
+        "customization": {
+            "pathPatterns": "Adjust to match your actual project structure (backend/, frontend/, apps/)",
+            "keywords": "Add domain-specific terms relevant to clinic operations",
+            "intentPatterns": "Use regex for flexible user intent matching"
+        }
+    }
+}
