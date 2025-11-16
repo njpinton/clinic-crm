@@ -42,7 +42,15 @@ export default function EditPatientPage() {
         setError(null);
 
         try {
-            const updatedPatient = await updatePatient(patientId, data);
+            // Filter out empty strings and convert to proper format
+            const filteredData: Partial<PatientFormValues> = {};
+            Object.entries(data).forEach(([key, value]) => {
+                if (value !== '' && value !== undefined) {
+                    filteredData[key as keyof PatientFormValues] = value as any;
+                }
+            });
+
+            const updatedPatient = await updatePatient(patientId, filteredData);
 
             // Redirect to the updated patient's detail page
             router.push(`/patients/${updatedPatient.id}`);

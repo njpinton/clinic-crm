@@ -20,7 +20,15 @@ export default function NewPatientPage() {
         setError(null);
 
         try {
-            const patient = await createPatient(data);
+            // Filter out empty strings
+            const filteredData: any = {};
+            Object.entries(data).forEach(([key, value]) => {
+                if (value !== '' && value !== undefined) {
+                    filteredData[key] = value;
+                }
+            });
+
+            const patient = await createPatient(filteredData);
 
             // Redirect to the newly created patient's detail page
             router.push(`/patients/${patient.id}`);
