@@ -5,3 +5,7 @@ gunicorn==21.2.0
 
 # Production database
 psycopg2==2.9.9
+dj-database-url==2.1.0
+
+# Static files
+whitenoise==6.6.0
