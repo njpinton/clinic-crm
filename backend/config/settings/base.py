@@ -25,11 +25,23 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'django_filters',
 
     # Local apps
     'apps.core',
+    'apps.users',
     'apps.patients',
+    'apps.doctors',
+    'apps.appointments',
+    'apps.clinical_notes',
+    'apps.laboratory',
+    'apps.employees',
+    'apps.prescriptions',
+    'apps.insurance',
 ]
+
+# Custom User Model
+AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
