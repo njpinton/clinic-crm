@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { patientFormSchema, type PatientFormValues } from '@/lib/validations/patient';
+import { patientSchema, type PatientFormValues } from '@/lib/validations/patient';
 import type { Patient } from '@/types/patient';
 
 interface PatientFormProps {
@@ -21,7 +21,7 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
         handleSubmit,
         formState: { errors },
     } = useForm<PatientFormValues>({
-        resolver: zodResolver(patientFormSchema),
+        resolver: zodResolver(patientSchema),
         defaultValues: patient ? {
             medical_record_number: patient.medical_record_number,
             first_name: patient.first_name,
