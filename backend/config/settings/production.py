@@ -8,10 +8,25 @@ from sentry_sdk.integrations.django import DjangoIntegration
 DEBUG = False
 
 # Must be set via environment variable
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('ALLOWED_HOSTS', '').split(',')
+    if host.strip()
+]
 
 # CORS settings - must be set via environment variable
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
+    if origin.strip()
+]
+
+# If no ALLOWED_HOSTS are set, raise an error (security)
+if not ALLOWED_HOSTS:
+    raise ValueError(
+        "ALLOWED_HOSTS environment variable must be set in production. "
+        "Example: ALLOWED_HOSTS=your-backend.vercel.app,your-frontend.vercel.app"
+    )
 
 # Security settings
 SECURE_SSL_REDIRECT = True

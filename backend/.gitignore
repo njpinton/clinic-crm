@@ -1,1 +1,55 @@
+# Vercel
 .vercel
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static_root/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Database
+*.sqlite
+*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Migrations (optional - comment out if you want to track migrations)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Sensitive files
+*.key
+*.pem
+credentials.json
+secrets.yaml
