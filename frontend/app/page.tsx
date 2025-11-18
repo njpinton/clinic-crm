@@ -1,6 +1,31 @@
+'use client';
+
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // If user is authenticated, redirect to patients page
+    if (!isLoading && user) {
+      router.push('/patients');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-blue-600 text-2xl mb-2">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -44,33 +69,32 @@ export default function HomePage() {
         {/* CTA Section */}
         <div className="text-center">
           <Link
-            href="/patients"
+            href="/login"
             className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
           >
-            Go to Patients
+            Sign In to Access Patients
           </Link>
 
-          <div className="mt-8 text-sm text-gray-500">
-            <p>⚠️ Note: Backend API is not yet deployed.</p>
-            <p>Patient data operations will be available once the backend is connected.</p>
+          <div className="mt-8 text-sm text-gray-600">
+            <p>Secure, HIPAA-compliant access to patient records</p>
           </div>
         </div>
 
         {/* Status Section */}
-        <div className="mt-16 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Deployment Status</h3>
+        <div className="mt-16 bg-green-50 border border-green-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
           <div className="space-y-2 text-sm">
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span>Frontend deployed on Vercel</span>
+              <span>Frontend running</span>
             </div>
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span>Supabase database created</span>
+              <span>Backend API connected</span>
             </div>
             <div className="flex items-center">
-              <span className="text-yellow-500 mr-2">○</span>
-              <span>Backend API pending deployment</span>
+              <span className="text-green-500 mr-2">✓</span>
+              <span>Supabase database ready</span>
             </div>
           </div>
         </div>

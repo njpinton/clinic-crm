@@ -63,6 +63,7 @@ export async function fetchPatients(params?: {
   search?: string;
   gender?: string;
   ordering?: string;
+  token?: string;
 }): Promise<PatientsResponse> {
   const searchParams = new URLSearchParams();
 
@@ -81,11 +82,17 @@ export async function fetchPatients(params?: {
 
   const url = `${API_URL}/api/patients/?${searchParams.toString()}`;
 
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (params?.token) {
+    headers['Authorization'] = `Bearer ${params.token}`;
+  }
+
   const response = await fetch(url, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     // Include credentials for session-based auth
     credentials: 'include',
     // Disable caching for patient data (PHI)
