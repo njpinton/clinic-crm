@@ -62,11 +62,20 @@ LOGGING = {
             'format': '{levelname} {asctime} {module} {message}',
             'style': '{',
         },
+        'hipaa_audit': {
+            'format': '{asctime} | {levelname} | {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
+        },
+        'hipaa_audit': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'hipaa_audit',
+            'level': 'INFO',
         },
     },
     'root': {
@@ -76,6 +85,11 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'hipaa_audit': {
+            'handlers': ['hipaa_audit', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
