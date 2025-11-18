@@ -60,3 +60,73 @@ class AllObjectsManager(models.Manager):
 
     def get_queryset(self):
         return super().get_queryset()
+
+
+class AuditLog(UUIDModel, TimeStampedModel):
+    """
+    HIPAA Audit Log model.
+    Stores all access to Protected Health Information (PHI) for compliance.
+    This model must NEVER be deleted - audit logs are permanent.
+    """
+    ACTION_CHOICES = [
+        ('CREATE', 'Create'),
+        ('READ', 'Read'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+        ('LIST', 'List'),
+        ('EXPORT', 'Export'),
+        ('PRINT', 'Print'),
+    ]
+
+    # User who performed the action
+    user = models.ForeignKey(
+        'users.User',
+        on_delete=models.PROTECT,  # Never delete audit logs
+        related_name='audit_logs'
+    )
+    user_email = models.EmailField(db_index=True)
+    user_role = models.CharField(max_length=20, db_index=True)
+
+    # Action details
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, db_index=True)
+    resource_type = models.CharField(max_length=50, db_index=True, help_text="Type of resource accessed (e.g., Patient, Appointment)")
+    resource_id = models.CharField(max_length=255, null=True, blank=True, help_text="ID of specific resource (null for LIST actions)")
+
+    # Additional details
+    details = models.TextField(blank=True, help_text="Human-readable description of the action")
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+
+    # Request metadata
+    request_method = models.CharField(max_length=10, blank=True)  # GET, POST, PUT, DELETE
+    request_path = models.CharField(max_length=500, blank=True)
+    query_params = models.TextField(blank=True)
+
+    # Success/Failure tracking
+    was_successful = models.BooleanField(default=True)
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['action', 'created_at']),
+            models.Index(fields=['resource_type', 'created_at']),
+            models.Index(fields=['user_email', 'created_at']),
+            models.Index(fields=['created_at']),
+        ]
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+
+    def __str__(self):
+        return f"{self.action} {self.resource_type} by {self.user_email} at {self.created_at}"
+
+    def save(self, *args, **kwargs):
+        """Override save to ensure audit logs are never modified after creation."""
+        if self.pk is not None:
+            raise ValueError("Audit logs cannot be modified after creation")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Prevent deletion of audit logs."""
+        raise ValueError("Audit logs cannot be deleted")
