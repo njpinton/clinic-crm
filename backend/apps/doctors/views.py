@@ -26,7 +26,7 @@ from .permissions import (
     CanManageCredentials,
     CanManageAvailability,
 )
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class SpecializationViewSet(viewsets.ModelViewSet):
@@ -121,7 +121,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated, CanAccessDoctor, CanModifyDoctor]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_accepting_new_patients', 'is_available_for_telemedicine']
+    filterset_fields = ['is_accepting_patients', 'board_certified']
     search_fields = [
         'user__first_name',
         'user__last_name',
@@ -177,7 +177,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='Doctor',
                 resource_id=None,
-                details='Viewed doctor list'
+                request=request,                details='Viewed doctor list'
             )
 
             return super().list(request, *args, **kwargs)
@@ -199,7 +199,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='Doctor',
                 resource_id=str(instance.id),
-                details=f'Viewed doctor profile: {instance.user.get_full_name()}'
+                request=request,                details=f'Viewed doctor profile: {instance.user.get_full_name()}'
             )
 
             serializer = self.get_serializer(instance)
@@ -223,7 +223,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='Doctor',
                     resource_id=str(response.data.get('id')),
-                    details='Created new doctor profile'
+                request=request,                    details='Created new doctor profile'
                 )
 
             return response
@@ -247,7 +247,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                     action='UPDATE',
                     resource_type='Doctor',
                     resource_id=str(instance.id),
-                    details=f'Updated doctor profile: {instance.user.get_full_name()}'
+                request=request,                    details=f'Updated doctor profile: {instance.user.get_full_name()}'
                 )
 
             return response
@@ -273,7 +273,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='DELETE',
                 resource_type='Doctor',
                 resource_id=str(instance.id),
-                details=f'Soft deleted doctor profile: {doctor_name}'
+                request=request,                details=f'Soft deleted doctor profile: {doctor_name}'
             )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -299,7 +299,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='DoctorAvailability',
                 resource_id=str(doctor.id),
-                details=f'Viewed availability schedule for: {doctor.user.get_full_name()}'
+                request=request,                details=f'Viewed availability schedule for: {doctor.user.get_full_name()}'
             )
 
             schedules = doctor.availability_schedules.filter(is_active=True)
@@ -327,7 +327,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='DoctorCredential',
                 resource_id=str(doctor.id),
-                details=f'Viewed credentials for: {doctor.user.get_full_name()}'
+                request=request,                details=f'Viewed credentials for: {doctor.user.get_full_name()}'
             )
 
             credentials = doctor.credentials.all()
@@ -363,7 +363,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Doctor',
                 resource_id=str(doctor.id),
-                details=f'Deactivated doctor: {doctor.user.get_full_name()}'
+                request=request,                details=f'Deactivated doctor: {doctor.user.get_full_name()}'
             )
 
             return Response({'detail': 'Doctor deactivated successfully.'})
@@ -397,7 +397,7 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Doctor',
                 resource_id=str(doctor.id),
-                details=f'Activated doctor: {doctor.user.get_full_name()}'
+                request=request,                details=f'Activated doctor: {doctor.user.get_full_name()}'
             )
 
             return Response({'detail': 'Doctor activated successfully.'})
@@ -456,7 +456,7 @@ class DoctorCredentialViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='DoctorCredential',
                 resource_id=None,
-                details='Viewed credentials list'
+                request=request,                details='Viewed credentials list'
             )
 
             return super().list(request, *args, **kwargs)
@@ -479,7 +479,7 @@ class DoctorCredentialViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='DoctorCredential',
                     resource_id=str(response.data.get('id')),
-                    details='Created new credential'
+                request=request,                    details='Created new credential'
                 )
 
             return response
@@ -514,7 +514,7 @@ class DoctorCredentialViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='DoctorCredential',
                 resource_id=str(credential.id),
-                details=f'Verified credential: {credential.credential_type} for {credential.doctor.user.get_full_name()}'
+                request=request,                details=f'Verified credential: {credential.credential_type} for {credential.doctor.user.get_full_name()}'
             )
 
             return Response({'detail': 'Credential verified successfully.'})
@@ -580,7 +580,7 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='DoctorAvailability',
                 resource_id=None,
-                details='Viewed availability schedules'
+                request=request,                details='Viewed availability schedules'
             )
 
             return super().list(request, *args, **kwargs)
@@ -603,7 +603,7 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='DoctorAvailability',
                     resource_id=str(response.data.get('id')),
-                    details='Created new availability schedule'
+                request=request,                    details='Created new availability schedule'
                 )
 
             return response
@@ -627,7 +627,7 @@ class DoctorAvailabilityViewSet(viewsets.ModelViewSet):
                     action='UPDATE',
                     resource_type='DoctorAvailability',
                     resource_id=str(instance.id),
-                    details=f'Updated availability for: {instance.doctor.user.get_full_name()}'
+                request=request,                    details=f'Updated availability for: {instance.doctor.user.get_full_name()}'
                 )
 
             return response

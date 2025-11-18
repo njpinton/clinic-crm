@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import LabTest, LabOrder, LabResult
 from .serializers import LabTestSerializer, LabOrderSerializer, LabResultSerializer
 from .permissions import CanAccessLaboratory
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class LabTestViewSet(viewsets.ModelViewSet):
@@ -65,7 +65,7 @@ class LabOrderViewSet(viewsets.ModelViewSet):
             action='LIST',
             resource_type='LabOrder',
             resource_id=None,
-            details='Viewed lab orders list'
+                request=request,            details='Viewed lab orders list'
         )
         return super().list(request, *args, **kwargs)
 
@@ -79,7 +79,7 @@ class LabOrderViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='LabOrder',
             resource_id=str(order.id),
-            details=f'Collected specimen for order {order.order_number}'
+                request=request,            details=f'Collected specimen for order {order.order_number}'
         )
         serializer = LabOrderSerializer(order)
         return Response(serializer.data)
@@ -94,7 +94,7 @@ class LabOrderViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='LabOrder',
             resource_id=str(order.id),
-            details=f'Completed order {order.order_number}'
+                request=request,            details=f'Completed order {order.order_number}'
         )
         serializer = LabOrderSerializer(order)
         return Response(serializer.data)
@@ -134,7 +134,7 @@ class LabResultViewSet(viewsets.ModelViewSet):
             action='LIST',
             resource_type='LabResult',
             resource_id=None,
-            details='Viewed lab results list'
+                request=request,            details='Viewed lab results list'
         )
         return super().list(request, *args, **kwargs)
 
@@ -151,7 +151,7 @@ class LabResultViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='LabResult',
             resource_id=str(result.id),
-            details=f'Verified result for {result.lab_test.test_name}'
+                request=request,            details=f'Verified result for {result.lab_test.test_name}'
         )
         serializer = LabResultSerializer(result)
         return Response(serializer.data)

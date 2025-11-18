@@ -23,7 +23,7 @@ from .permissions import (
     CanManageMedications,
     CanManageRefills,
 )
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class MedicationViewSet(viewsets.ModelViewSet):
@@ -101,7 +101,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='Prescription',
                 resource_id=None,
-                details='Viewed prescription list'
+                request=request,                details='Viewed prescription list'
             )
             return super().list(request, *args, **kwargs)
         except Exception as e:
@@ -120,7 +120,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='Prescription',
                 resource_id=str(instance.id),
-                details=f'Viewed prescription: {instance.prescription_number}'
+                request=request,                details=f'Viewed prescription: {instance.prescription_number}'
             )
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
@@ -141,7 +141,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='Prescription',
                     resource_id=str(response.data.get('id')),
-                    details='Created new prescription'
+                request=request,                    details='Created new prescription'
                 )
             return response
         except Exception as e:
@@ -163,7 +163,7 @@ class PrescriptionViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Prescription',
                 resource_id=str(prescription.id),
-                details=f'Cancelled prescription: {prescription.prescription_number}'
+                request=request,                details=f'Cancelled prescription: {prescription.prescription_number}'
             )
             serializer = PrescriptionSerializer(prescription)
             return Response(serializer.data)
@@ -231,7 +231,7 @@ class PrescriptionRefillViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='PrescriptionRefill',
                 resource_id=str(refill.id),
-                details=f'Approved refill for prescription: {refill.prescription.prescription_number}'
+                request=request,                details=f'Approved refill for prescription: {refill.prescription.prescription_number}'
             )
             serializer = PrescriptionRefillSerializer(refill)
             return Response(serializer.data)
@@ -262,7 +262,7 @@ class PrescriptionRefillViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='PrescriptionRefill',
                 resource_id=str(refill.id),
-                details=f'Denied refill for prescription: {refill.prescription.prescription_number}'
+                request=request,                details=f'Denied refill for prescription: {refill.prescription.prescription_number}'
             )
             serializer = PrescriptionRefillSerializer(refill)
             return Response(serializer.data)

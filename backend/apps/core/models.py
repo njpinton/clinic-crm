@@ -123,7 +123,7 @@ class AuditLog(UUIDModel, TimeStampedModel):
 
     def save(self, *args, **kwargs):
         """Override save to ensure audit logs are never modified after creation."""
-        if self.pk is not None:
+        if not self._state.adding:
             raise ValueError("Audit logs cannot be modified after creation")
         super().save(*args, **kwargs)
 

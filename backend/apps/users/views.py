@@ -25,7 +25,7 @@ from .permissions import (
     CanChangeUserRole,
     CanActivateDeactivateUser,
 )
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -85,8 +85,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='User',
                 resource_id=None,
-                details='Viewed user list',
-                request=request
+                request=request,                details='Viewed user list',
             )
 
             return super().list(request, *args, **kwargs)
@@ -108,8 +107,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='User',
                 resource_id=str(instance.id),
-                details=f'Viewed user profile: {instance.email}',
-                request=request
+                request=request,                details=f'Viewed user profile: {instance.email}',
             )
 
             serializer = self.get_serializer(instance)
@@ -133,8 +131,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='User',
                     resource_id=str(response.data.get('id')),
-                    details=f'Created new user: {response.data.get("email")}',
-                    request=request
+                request=request,                    details=f'Created new user: {response.data.get("email")}',
                 )
 
             return response
@@ -158,8 +155,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     action='UPDATE',
                     resource_type='User',
                     resource_id=str(instance.id),
-                    details=f'Updated user profile: {instance.email}',
-                    request=request
+                request=request,                    details=f'Updated user profile: {instance.email}',
                 )
 
             return response
@@ -185,8 +181,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='User',
                 resource_id=str(instance.id),
-                details=f'Deactivated user: {instance.email}',
-                request=request
+                request=request,                details=f'Deactivated user: {instance.email}',
             )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -223,8 +218,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='User',
                 resource_id=str(user.id),
-                details=f'Changed role from {old_role} to {new_role} for user: {user.email}',
-                request=request
+                request=request,                details=f'Changed role from {old_role} to {new_role} for user: {user.email}',
             )
 
             return Response({
@@ -261,8 +255,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='User',
                 resource_id=str(request.user.id),
-                details='Changed password',
-                request=request
+                request=request,                details='Changed password',
             )
 
             return Response({'detail': 'Password changed successfully.'})
@@ -287,8 +280,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='User',
                 resource_id=str(user.id),
-                details=f'Activated user: {user.email}',
-                request=request
+                request=request,                details=f'Activated user: {user.email}',
             )
 
             return Response({'detail': 'User activated successfully.'})
@@ -313,8 +305,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='User',
                 resource_id=str(user.id),
-                details=f'Deactivated user: {user.email}',
-                request=request
+                request=request,                details=f'Deactivated user: {user.email}',
             )
 
             return Response({'detail': 'User deactivated successfully.'})
@@ -337,8 +328,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='User',
                 resource_id=str(request.user.id),
-                details='Viewed own profile',
-                request=request
+                request=request,                details='Viewed own profile',
             )
 
             return Response(serializer.data)
@@ -375,8 +365,7 @@ class UserRegistrationViewSet(viewsets.GenericViewSet):
                 action='CREATE',
                 resource_type='User',
                 resource_id=str(user.id),
-                details=f'New patient registered: {user.email}',
-                request=request
+                request=request,                details=f'New patient registered: {user.email}',
             )
 
             return Response(

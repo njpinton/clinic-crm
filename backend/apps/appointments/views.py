@@ -28,7 +28,7 @@ from .permissions import (
     CanCompleteAppointment,
     CanManageReminders,
 )
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
@@ -149,7 +149,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='Appointment',
                 resource_id=None,
-                details='Viewed appointment list'
+                request=request,                details='Viewed appointment list'
             )
 
             return super().list(request, *args, **kwargs)
@@ -171,7 +171,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='READ',
                 resource_type='Appointment',
                 resource_id=str(instance.id),
-                details=f'Viewed appointment: {instance.patient.full_name} with {instance.doctor.full_name}'
+                request=request,                details=f'Viewed appointment: {instance.patient.full_name} with {instance.doctor.full_name}'
             )
 
             serializer = self.get_serializer(instance)
@@ -195,7 +195,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='Appointment',
                     resource_id=str(response.data.get('id')),
-                    details='Created new appointment'
+                request=request,                    details='Created new appointment'
                 )
 
             return response
@@ -219,7 +219,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     action='UPDATE',
                     resource_type='Appointment',
                     resource_id=str(instance.id),
-                    details=f'Updated appointment: {instance.patient.full_name} with {instance.doctor.full_name}'
+                request=request,                    details=f'Updated appointment: {instance.patient.full_name} with {instance.doctor.full_name}'
                 )
 
             return response
@@ -245,7 +245,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='DELETE',
                 resource_type='Appointment',
                 resource_id=str(instance.id),
-                details=f'Soft deleted appointment: {appointment_info}'
+                request=request,                details=f'Soft deleted appointment: {appointment_info}'
             )
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -289,7 +289,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Appointment',
                 resource_id=str(appointment.id),
-                details=f'Checked in patient: {appointment.patient.full_name}'
+                request=request,                details=f'Checked in patient: {appointment.patient.full_name}'
             )
 
             serializer = AppointmentSerializer(appointment)
@@ -326,7 +326,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Appointment',
                 resource_id=str(appointment.id),
-                details=f'Completed appointment: {appointment.patient.full_name}'
+                request=request,                details=f'Completed appointment: {appointment.patient.full_name}'
             )
 
             serializer = AppointmentSerializer(appointment)
@@ -370,7 +370,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Appointment',
                 resource_id=str(appointment.id),
-                details=f'Cancelled appointment: {appointment.patient.full_name} with {appointment.doctor.full_name}'
+                request=request,                details=f'Cancelled appointment: {appointment.patient.full_name} with {appointment.doctor.full_name}'
             )
 
             response_serializer = AppointmentSerializer(appointment)
@@ -413,7 +413,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Appointment',
                 resource_id=str(appointment.id),
-                details=f'Rescheduled appointment: {appointment.patient.full_name} with {appointment.doctor.full_name} to {new_appointment.appointment_datetime}'
+                request=request,                details=f'Rescheduled appointment: {appointment.patient.full_name} with {appointment.doctor.full_name} to {new_appointment.appointment_datetime}'
             )
 
             response_serializer = AppointmentSerializer(new_appointment)
@@ -464,7 +464,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='UPDATE',
                 resource_type='Appointment',
                 resource_id=str(appointment.id),
-                details=f'Marked as no-show: {appointment.patient.full_name}'
+                request=request,                details=f'Marked as no-show: {appointment.patient.full_name}'
             )
 
             serializer = AppointmentSerializer(appointment)
@@ -494,7 +494,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='Appointment',
                 resource_id=None,
-                details='Viewed upcoming appointments'
+                request=request,                details='Viewed upcoming appointments'
             )
 
             serializer = AppointmentListSerializer(queryset, many=True)
@@ -524,7 +524,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='Appointment',
                 resource_id=None,
-                details="Viewed today's appointments"
+                request=request,                details="Viewed today's appointments"
             )
 
             serializer = AppointmentListSerializer(queryset, many=True)
@@ -576,7 +576,7 @@ class AppointmentReminderViewSet(viewsets.ModelViewSet):
                 action='LIST',
                 resource_type='AppointmentReminder',
                 resource_id=None,
-                details='Viewed appointment reminders'
+                request=request,                details='Viewed appointment reminders'
             )
 
             return super().list(request, *args, **kwargs)
@@ -599,7 +599,7 @@ class AppointmentReminderViewSet(viewsets.ModelViewSet):
                     action='CREATE',
                     resource_type='AppointmentReminder',
                     resource_id=str(response.data.get('id')),
-                    details='Created appointment reminder'
+                request=request,                    details='Created appointment reminder'
                 )
 
             return response

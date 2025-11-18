@@ -15,7 +15,7 @@ from .serializers import (
     InsuranceClaimSerializer,
 )
 from .permissions import CanAccessInsurance
-from apps.core.utils import log_phi_access
+from apps.core.audit import log_phi_access
 
 
 class InsuranceProviderViewSet(viewsets.ModelViewSet):
@@ -73,7 +73,7 @@ class PatientInsuranceViewSet(viewsets.ModelViewSet):
             action='LIST',
             resource_type='PatientInsurance',
             resource_id=None,
-            details='Viewed patient insurance list'
+                request=request,            details='Viewed patient insurance list'
         )
         return super().list(request, *args, **kwargs)
 
@@ -91,7 +91,7 @@ class PatientInsuranceViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='PatientInsurance',
             resource_id=str(insurance.id),
-            details=f'Verified insurance for {insurance.patient.full_name}'
+                request=request,            details=f'Verified insurance for {insurance.patient.full_name}'
         )
         serializer = PatientInsuranceSerializer(insurance)
         return Response(serializer.data)
@@ -121,7 +121,7 @@ class InsuranceClaimViewSet(viewsets.ModelViewSet):
             action='LIST',
             resource_type='InsuranceClaim',
             resource_id=None,
-            details='Viewed insurance claims list'
+                request=request,            details='Viewed insurance claims list'
         )
         return super().list(request, *args, **kwargs)
 
@@ -135,7 +135,7 @@ class InsuranceClaimViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='InsuranceClaim',
             resource_id=str(claim.id),
-            details=f'Submitted claim {claim.claim_number}'
+                request=request,            details=f'Submitted claim {claim.claim_number}'
         )
         serializer = InsuranceClaimSerializer(claim)
         return Response(serializer.data)
@@ -152,7 +152,7 @@ class InsuranceClaimViewSet(viewsets.ModelViewSet):
             action='UPDATE',
             resource_type='InsuranceClaim',
             resource_id=str(claim.id),
-            details=f'Marked claim {claim.claim_number} as paid'
+                request=request,            details=f'Marked claim {claim.claim_number} as paid'
         )
         serializer = InsuranceClaimSerializer(claim)
         return Response(serializer.data)

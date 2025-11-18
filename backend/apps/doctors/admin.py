@@ -39,7 +39,7 @@ class DoctorCredentialInline(admin.TabularInline):
         'credential_number',
         'issuing_organization',
         'issue_date',
-        'expiration_date',
+        'expiry_date',
         'is_verified',
         'verification_date'
     ]
@@ -68,8 +68,8 @@ class DoctorAdmin(admin.ModelAdmin):
         'created_at'
     ]
     list_filter = [
-        'is_accepting_new_patients',
-        'is_available_for_telemedicine',
+        'is_accepting_patients',
+        'board_certified',
         'user__is_active',
         'created_at',
         'specializations'
@@ -234,7 +234,7 @@ class DoctorCredentialAdmin(admin.ModelAdmin):
         'credential_number',
         'issuing_organization',
         'issue_date',
-        'expiration_date',
+        'expiry_date',
         'verification_status',
         'is_expired_display'
     ]
@@ -242,7 +242,7 @@ class DoctorCredentialAdmin(admin.ModelAdmin):
         'credential_type',
         'is_verified',
         'issue_date',
-        'expiration_date'
+        'expiry_date'
     ]
     search_fields = [
         'doctor__user__first_name',
