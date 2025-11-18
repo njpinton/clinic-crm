@@ -10,12 +10,17 @@ import sentry_sdk
 audit_logger = logging.getLogger('hipaa_audit')
 
 
-def log_phi_access(user, action, resource_type, resource_id=None, details=''):
+def log_phi_access(user, action, resource_type, resource_id=None, details='', request=None):
     """
     Log Protected Health Information (PHI) access for HIPAA compliance.
 
     This function creates an audit trail entry whenever PHI is accessed,
     modified, created, or deleted. This is required for HIPAA compliance.
+
+    Logs are written to:
+    1. Database (AuditLog model) - permanent storage
+    2. Log files - for real-time monitoring
+    3. (Future) SIEM system - for security monitoring
 
     Args:
         user: The user who performed the action (User model instance)
@@ -23,6 +28,7 @@ def log_phi_access(user, action, resource_type, resource_id=None, details=''):
         resource_type: The type of resource accessed (e.g., 'Patient', 'Appointment')
         resource_id: The ID of the specific resource (optional for LIST actions)
         details: Additional details about the action
+        request: Optional HTTP request object for capturing IP, user agent, etc.
 
     Example:
         log_phi_access(
@@ -30,7 +36,8 @@ def log_phi_access(user, action, resource_type, resource_id=None, details=''):
             action='READ',
             resource_type='Patient',
             resource_id=str(patient.id),
-            details=f'Viewed patient record: {patient.full_name}'
+            details=f'Viewed patient record: {patient.full_name}',
+            request=request
         )
     """
     try:
@@ -39,7 +46,39 @@ def log_phi_access(user, action, resource_type, resource_id=None, details=''):
         user_role = getattr(user, 'role', 'unknown')
         user_id = getattr(user, 'id', None)
 
-        # Create audit log entry
+        # Get request metadata if available
+        ip_address = None
+        user_agent = ''
+        request_method = ''
+        request_path = ''
+        query_params = ''
+
+        if request:
+            ip_address = get_client_ip(request)
+            user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]  # Truncate to prevent overflow
+            request_method = request.method
+            request_path = request.path
+            query_params = request.META.get('QUERY_STRING', '')
+
+        # Create audit log entry in database
+        from apps.core.models import AuditLog
+        AuditLog.objects.create(
+            user=user,
+            user_email=user_email,
+            user_role=user_role,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            request_method=request_method,
+            request_path=request_path,
+            query_params=query_params,
+            was_successful=True,
+        )
+
+        # Also log to file for real-time monitoring
         audit_entry = {
             'timestamp': timezone.now().isoformat(),
             'user_id': str(user_id) if user_id else 'unknown',
@@ -49,19 +88,13 @@ def log_phi_access(user, action, resource_type, resource_id=None, details=''):
             'resource_type': resource_type,
             'resource_id': resource_id or 'N/A',
             'details': details,
+            'ip_address': ip_address,
         }
 
-        # Log to audit logger
         audit_logger.info(
             f"HIPAA_AUDIT: {action} {resource_type} by {user_email} (role: {user_role})",
             extra=audit_entry
         )
-
-        # In production, this would also:
-        # 1. Write to a separate audit database
-        # 2. Send to a SIEM system
-        # 3. Generate compliance reports
-        # For now, we'll just log it
 
     except Exception as e:
         # CRITICAL: Audit logging failures should never break the application
