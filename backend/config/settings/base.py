@@ -202,3 +202,64 @@ SPECTACULAR_SETTINGS = {
 # CORS settings (will be overridden in development/production)
 CORS_ALLOWED_ORIGINS = []
 CORS_ALLOW_CREDENTIALS = True
+
+# Sentry Error Tracking (HIPAA-compliant)
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+import re
+
+def scrub_sensitive_data(event, hint):
+    """Remove all PHI before sending to Sentry (HIPAA compliance)"""
+    # Sensitive field patterns
+    sensitive_fields = [
+        'password',
+        'ssn',
+        'social_security_number',
+        'credit_card',
+        'medical_record_number',
+        'insurance_id',
+        'date_of_birth',
+        'phone',
+        'email',
+    ]
+
+    # Sensitive patterns to redact
+    sensitive_patterns = [
+        (r'\d{3}-\d{2}-\d{4}', '[SSN-REDACTED]'),  # SSN
+        (r'\d{16}', '[CC-REDACTED]'),              # Credit card
+        (r'MRN\d+', '[MRN-REDACTED]'),             # Medical record numbers
+    ]
+
+    # Scrub request data
+    if 'request' in event and 'data' in event['request']:
+        for field in sensitive_fields:
+            if field in event['request']['data']:
+                event['request']['data'][field] = '[FILTERED]'
+
+    # Scrub message
+    if 'message' in event:
+        for pattern, replacement in sensitive_patterns:
+            event['message'] = re.sub(pattern, replacement, event['message'])
+
+    # Scrub extra data
+    if 'extra' in event:
+        for field in sensitive_fields:
+            if field in event['extra']:
+                event['extra'][field] = '[FILTERED]'
+
+    return event
+
+# Initialize Sentry
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.environ.get('ENVIRONMENT', 'development'),
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+        send_default_pii=False,  # HIPAA: Never send PII by default
+        before_send=scrub_sensitive_data,  # HIPAA: Scrub all sensitive data
+        ignore_errors=[
+            'django.http.response.Http404',  # Don't log 404s
+        ],
+    )
