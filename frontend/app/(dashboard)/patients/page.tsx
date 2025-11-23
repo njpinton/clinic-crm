@@ -1,15 +1,18 @@
 'use client';
 
 /**
- * Patients list page - Client Component with authentication.
+ * Patients list page - Client Component with authentication and multiple views.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchPatients } from '@/lib/api/patients';
 import { PatientList } from '@/components/patients/PatientList';
+import PatientTable from '@/components/patients/PatientTable';
+import PatientSimpleListView from '@/components/patients/PatientSimpleListView';
+import ViewToggle, { type ViewType } from '@/components/common/ViewToggle';
 import type { Patient } from '@/types/patient';
 
 export default function PatientsPage() {
@@ -18,6 +21,20 @@ export default function PatientsPage() {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [currentView, setCurrentView] = useState<ViewType>(() => {
+        // Try to get saved view preference from localStorage
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('patientViewPreference') as ViewType) || 'grid';
+        }
+        return 'grid';
+    });
+
+    const handleViewChange = useCallback((view: ViewType) => {
+        setCurrentView(view);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('patientViewPreference', view);
+        }
+    }, []);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -73,15 +90,15 @@ export default function PatientsPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-                <div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div className="flex-1">
                     <h1 className="text-3xl font-bold text-gray-900">Patients</h1>
                     <p className="mt-2 text-gray-600">
                         Manage patient records and information
                     </p>
                     {user && (
                         <p className="mt-1 text-sm text-gray-500">
-                            Welcome, {user.first_name} {user.last_name} ({user.role})
+                            Welcome, {user.first_name || user.firstName} {user.last_name || user.lastName} ({user.role})
                         </p>
                     )}
                 </div>
@@ -105,6 +122,13 @@ export default function PatientsPage() {
                 </div>
             </div>
 
+            {/* View Toggle */}
+            {!isLoading && !error && patients.length > 0 && (
+                <div className="mb-6">
+                    <ViewToggle currentView={currentView} onViewChange={handleViewChange} />
+                </div>
+            )}
+
             {/* Error Message */}
             {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-md">
@@ -119,8 +143,12 @@ export default function PatientsPage() {
                     <div className="text-gray-600">Loading patients...</div>
                 </div>
             ) : (
-                /* Patient List - Client Component for interactivity */
-                <PatientList patients={patients} />
+                /* Patient Views - Conditional rendering based on currentView */
+                <>
+                    {currentView === 'grid' && <PatientList patients={patients} />}
+                    {currentView === 'table' && <PatientTable patients={patients} />}
+                    {currentView === 'list' && <PatientSimpleListView patients={patients} />}
+                </>
             )}
         </div>
     );
