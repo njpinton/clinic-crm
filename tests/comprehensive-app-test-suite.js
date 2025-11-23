@@ -54,7 +54,7 @@ async function makeRequest(url, options = {}) {
         'Content-Type': 'application/json',
         ...options.headers,
       },
-      timeout: options.timeout || 5000,
+      timeout: options.timeout || 10000,  // Increased from 5000ms to 10000ms
     };
 
     const req = client.request(requestOptions, (res) => {
