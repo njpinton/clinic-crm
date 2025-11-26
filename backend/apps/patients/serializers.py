@@ -39,6 +39,7 @@ class PatientSerializer(serializers.ModelSerializer):
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'insurance_info',
+            'notes',
             'created_at',
             'updated_at',
         ]

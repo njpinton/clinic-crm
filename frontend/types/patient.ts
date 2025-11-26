@@ -37,6 +37,7 @@ export interface Patient extends TimestampFields {
   emergency_contact_relationship: string;
   emergency_contact_phone: string;
   insurance_info: string;
+  notes: string;
 }
 
 // Patient creation payload
@@ -58,6 +59,7 @@ export interface PatientCreatePayload {
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
   insurance_info?: string;
+  notes?: string;
 }
 
 // Patient update payload

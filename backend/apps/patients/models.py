@@ -78,6 +78,12 @@ class Patient(UUIDModel, TimeStampedModel, SoftDeleteModel):
         help_text="Insurance provider, policy number, group number, etc."
     )
 
+    # Administrative Notes
+    notes = models.TextField(
+        blank=True,
+        help_text="General notes about the patient (administrative, non-clinical)"
+    )
+
     # Managers
     objects = SoftDeleteManager()
     all_objects = AllObjectsManager()
