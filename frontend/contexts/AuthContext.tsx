@@ -1,7 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { setLogoutCallback } from '@/lib/api/client';
 
 interface User {
   id: string;
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
 
-  // Load auth state from localStorage on mount
+  // Load auth state from localStorage on mount and register logout callback
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
     const storedRefreshToken = localStorage.getItem('refreshToken');
@@ -68,7 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(JSON.parse(storedUser));
     }
     setIsLoading(false);
-  }, []);
+
+    // Register logout callback for automatic token timeout detection
+    setLogoutCallback(logout);
+  }, [logout]);
 
   // Set up token refresh interval (refresh 5 minutes before expiration - assuming 1 hour token life)
   useEffect(() => {
@@ -131,7 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     setAccessToken(null);
     setRefreshTokenValue(null);
@@ -139,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     router.push('/login');
-  };
+  }, [router]);
 
   const refreshToken = async () => {
     if (!refreshTokenValue) {

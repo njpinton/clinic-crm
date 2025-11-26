@@ -5,55 +5,10 @@
 
 import type { Patient, PatientsResponse } from '@/types/patient';
 import type { CreatePatientInput, UpdatePatientInput } from '@/lib/validations/patient';
+import { handleResponse, API_URL, ApiError } from './client';
 
-/**
- * Base API URL from environment variables
- */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:8000';
-
-/**
- * API error class for better error handling
- */
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public data?: any
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-/**
- * Helper function to handle API responses
- */
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
-    let errorData;
-
-    try {
-      errorData = await response.json();
-      if (errorData.error) {
-        errorMessage = errorData.error;
-      } else if (errorData.detail) {
-        errorMessage = errorData.detail;
-      }
-    } catch {
-      // If response is not JSON, use default error message
-    }
-
-    throw new ApiError(errorMessage, response.status, errorData);
-  }
-
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
-}
+// Re-export ApiError for backward compatibility
+export { ApiError };
 
 /**
  * Fetch all patients with optional filters
