@@ -7,7 +7,7 @@ from django.utils import timezone
 from .models import ClinicalNote, SOAPNote, ProgressNote, ClinicalNoteTemplate
 from apps.patients.serializers import PatientSerializer
 from apps.doctors.serializers import DoctorListSerializer
-from apps.users.serializers import UserSerializer
+from apps.users.serializers import UserListSerializer
 
 
 class SOAPNoteSerializer(serializers.ModelSerializer):
@@ -79,7 +79,7 @@ class ClinicalNoteDetailSerializer(serializers.ModelSerializer):
     doctor = DoctorListSerializer(read_only=True)
     doctor_id = serializers.UUIDField(write_only=True)
 
-    signed_by = UserSerializer(read_only=True)
+    signed_by = UserListSerializer(read_only=True)
 
     soap_details = SOAPNoteSerializer(read_only=True)
     progress_details = ProgressNoteSerializer(read_only=True)
