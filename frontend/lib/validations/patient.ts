@@ -143,6 +143,13 @@ export const patientSchema = z.object({
   insurance_info: z
     .record(z.any())
     .optional(),
+
+  // Administrative notes
+  notes: z
+    .string()
+    .max(5000, 'Notes must be 5000 characters or less')
+    .optional()
+    .or(z.literal('')),
 });
 
 /**

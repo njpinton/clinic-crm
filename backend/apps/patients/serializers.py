@@ -155,6 +155,7 @@ class PatientCreateSerializer(serializers.ModelSerializer):
             'emergency_contact_relationship',
             'emergency_contact_phone',
             'insurance_info',
+            'notes',
         ]
         read_only_fields = ['id', 'medical_record_number']
 
