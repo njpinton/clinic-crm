@@ -11,20 +11,21 @@ import { z } from 'zod';
 export const genderEnum = z.enum(['M', 'F', 'O', 'U']);
 
 /**
- * US State code validation (2-letter uppercase)
+ * Philippine province name validation
  */
-const stateRegex = /^[A-Z]{2}$/;
+const provinceRegex = /^[A-Za-z\s\-]{2,100}$/;
 
 /**
- * Phone number validation (international format)
- * Matches Django regex: ^\+?1?\d{9,15}$
+ * Philippine phone number validation
+ * Matches formats: +639123456789, +63912345678, 09123456789
+ * Matches Django regex: ^\+?63\d{9,10}$|^\+?639\d{8,9}$|^09\d{9}$
  */
-const phoneRegex = /^\+?1?\d{9,15}$/;
+const phoneRegex = /^(\+?63|0)9\d{8,9}$/;
 
 /**
- * ZIP code validation (US format: 12345 or 12345-6789)
+ * Philippine postal code validation (4 digits)
  */
-const zipCodeRegex = /^\d{5}(-\d{4})?$/;
+const postalCodeRegex = /^\d{4}$/;
 
 /**
  * Base patient schema with all fields
@@ -74,7 +75,7 @@ export const patientSchema = z.object({
 
   phone: z
     .string()
-    .regex(phoneRegex, 'Phone number must be in format: +999999999 (9-15 digits)')
+    .regex(phoneRegex, 'Phone number must be in Philippine format: +639123456789 or 09123456789')
     .max(17, 'Phone number must be 17 characters or less')
     .optional()
     .or(z.literal('')),
@@ -104,16 +105,16 @@ export const patientSchema = z.object({
     .optional()
     .or(z.literal('')),
 
-  state: z
+  province: z
     .string()
-    .length(2, 'State must be 2 characters (e.g., CA, NY)')
-    .regex(stateRegex, 'State must be 2 uppercase letters')
+    .regex(provinceRegex, 'Province name must be valid (e.g., Metro Manila, Cebu)')
+    .max(100, 'Province must be 100 characters or less')
     .optional()
     .or(z.literal('')),
 
-  zip_code: z
+  postal_code: z
     .string()
-    .regex(zipCodeRegex, 'ZIP code must be in format: 12345 or 12345-6789')
+    .regex(postalCodeRegex, 'Postal code must be 4 digits (e.g., 1600 for Makati)')
     .optional()
     .or(z.literal('')),
 
@@ -132,7 +133,7 @@ export const patientSchema = z.object({
 
   emergency_contact_phone: z
     .string()
-    .regex(phoneRegex, 'Emergency contact phone must be in format: +999999999 (9-15 digits)')
+    .regex(phoneRegex, 'Emergency contact phone must be in Philippine format: +639123456789 or 09123456789')
     .max(17, 'Emergency contact phone must be 17 characters or less')
     .optional()
     .or(z.literal('')),

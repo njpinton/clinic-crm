@@ -33,8 +33,8 @@ class PatientSerializer(serializers.ModelSerializer):
             'address_line1',
             'address_line2',
             'city',
-            'state',
-            'zip_code',
+            'province',
+            'postal_code',
             'emergency_contact_name',
             'emergency_contact_relationship',
             'emergency_contact_phone',
@@ -83,22 +83,38 @@ class PatientSerializer(serializers.ModelSerializer):
             return value.lower().strip()
         return value
 
-    def validate_state(self, value):
-        """Validate US state code."""
+    def validate_province(self, value):
+        """Validate Philippine province."""
         if value:
-            value = value.upper().strip()
-            if len(value) != 2:
-                raise serializers.ValidationError("State must be a 2-letter code.")
+            value = value.strip()
+            # List of valid Philippine provinces (abbreviated)
+            valid_provinces = [
+                'Metro Manila', 'Quezon City', 'Makati', 'Caloocan', 'Manila',
+                'Laguna', 'Cavite', 'Batangas', 'Rizal', 'Bulacan',
+                'Pampanga', 'Nueva Ecija', 'Aurora', 'Tarlac', 'Nueva Vizcaya',
+                'Pangasinan', 'Ilocos Norte', 'Ilocos Sur', 'La Union', 'Benguet',
+                'Mountain Province', 'Ifugao', 'Isabela', 'Quirino', 'Catanduanes',
+                'Camarines Norte', 'Camarines Sur', 'Sorsogon', 'Albay', 'Masbate',
+                'Romblon', 'Aklan', 'Antique', 'Capiz', 'Iloilo', 'Guimaras',
+                'Negros Occidental', 'Negros Oriental', 'Cebu', 'Bohol', 'Siquijor',
+                'Zamboanga del Norte', 'Zamboanga del Sur', 'Zamboanga Sibugay',
+                'Misamis Occidental', 'Misamis Oriental', 'Bukidnon', 'Lanao del Norte',
+                'Lanao del Sur', 'Maguindanao', 'Cotabato', 'South Cotabato', 'Sultan Kudarat',
+                'Davao del Norte', 'Davao del Sur', 'Davao Oriental', 'Davao Occidental',
+                'Surigao del Norte', 'Surigao del Sur', 'Dinagat Islands', 'Agusan del Norte',
+                'Agusan del Sur', 'Camiguin', 'Misamis Oriental', 'Sarangani', 'Palawan',
+                'Batanes', 'Marinduque', 'Mindoro Occidental', 'Mindoro Oriental'
+            ]
         return value
 
-    def validate_zip_code(self, value):
-        """Validate US ZIP code format."""
+    def validate_postal_code(self, value):
+        """Validate Philippine postal code format."""
         if value:
             import re
-            # Accept formats: 12345 or 12345-6789
-            if not re.match(r'^\d{5}(-\d{4})?$', value):
+            # Philippine postal codes are 4 digits
+            if not re.match(r'^\d{4}$', value):
                 raise serializers.ValidationError(
-                    "ZIP code must be in format 12345 or 12345-6789."
+                    "Postal code must be 4 digits (e.g., 1600 for Makati)."
                 )
         return value
 
@@ -144,8 +160,8 @@ class PatientCreateSerializer(serializers.ModelSerializer):
             'address_line1',
             'address_line2',
             'city',
-            'state',
-            'zip_code',
+            'province',
+            'postal_code',
             'emergency_contact_name',
             'emergency_contact_relationship',
             'emergency_contact_phone',

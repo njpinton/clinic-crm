@@ -107,8 +107,8 @@ export default async function PatientDetailPage({ params }: PatientDetailPagePro
                                         {patient.address_line2 && <><br />{patient.address_line2}</>}
                                         <br />
                                         {patient.city && `${patient.city}, `}
-                                        {patient.state && `${patient.state} `}
-                                        {patient.zip_code}
+                                        {patient.province && `${patient.province} `}
+                                        {patient.postal_code}
                                     </>
                                 ) : (
                                     'Not provided'

@@ -34,8 +34,8 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
             address_line1: patient.address_line1 || '',
             address_line2: patient.address_line2 || '',
             city: patient.city || '',
-            state: patient.state || '',
-            zip_code: patient.zip_code || '',
+            province: patient.province || '',
+            postal_code: patient.postal_code || '',
             emergency_contact_name: patient.emergency_contact_name || '',
             emergency_contact_relationship: patient.emergency_contact_relationship || '',
             emergency_contact_phone: patient.emergency_contact_phone || '',
@@ -248,37 +248,37 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
                     </div>
 
                     <div>
-                        <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
-                            State
+                        <label htmlFor="province" className="block text-sm font-medium text-gray-700 mb-1">
+                            Province
                         </label>
                         <input
-                            {...register('state')}
+                            {...register('province')}
                             type="text"
-                            id="state"
-                            placeholder="CA"
-                            maxLength={2}
+                            id="province"
+                            placeholder="Metro Manila"
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             disabled={isSubmitting}
                         />
-                        {errors.state && (
-                            <p className="mt-1 text-sm text-red-600">{errors.state.message}</p>
+                        {errors.province && (
+                            <p className="mt-1 text-sm text-red-600">{errors.province.message}</p>
                         )}
                     </div>
 
                     <div>
-                        <label htmlFor="zip_code" className="block text-sm font-medium text-gray-700 mb-1">
-                            ZIP Code
+                        <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700 mb-1">
+                            Postal Code
                         </label>
                         <input
-                            {...register('zip_code')}
+                            {...register('postal_code')}
                             type="text"
-                            id="zip_code"
-                            placeholder="12345"
+                            id="postal_code"
+                            placeholder="1600"
+                            maxLength={4}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             disabled={isSubmitting}
                         />
-                        {errors.zip_code && (
-                            <p className="mt-1 text-sm text-red-600">{errors.zip_code.message}</p>
+                        {errors.postal_code && (
+                            <p className="mt-1 text-sm text-red-600">{errors.postal_code.message}</p>
                         )}
                     </div>
                 </div>

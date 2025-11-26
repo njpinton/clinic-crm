@@ -31,8 +31,8 @@ export interface Patient extends TimestampFields {
   address_line1: string;
   address_line2: string;
   city: string;
-  state: string;
-  zip_code: string;
+  province: string;
+  postal_code: string;
   emergency_contact_name: string;
   emergency_contact_relationship: string;
   emergency_contact_phone: string;
@@ -52,8 +52,8 @@ export interface PatientCreatePayload {
   address_line1?: string;
   address_line2?: string;
   city?: string;
-  state?: string;
-  zip_code?: string;
+  province?: string;
+  postal_code?: string;
   emergency_contact_name?: string;
   emergency_contact_relationship?: string;
   emergency_contact_phone?: string;
