@@ -1,24 +1,92 @@
+'use client';
+
 /**
- * Patient detail page - Server Component.
+ * Patient detail page - Client Component.
  */
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { fetchPatient } from '@/lib/api/patients';
-import { notFound } from 'next/navigation';
+import type { Patient } from '@/types/patient';
 
-interface PatientDetailPageProps {
-    params: {
-        id: string;
-    };
-}
+export default function PatientDetailPage() {
+    const router = useRouter();
+    const params = useParams();
+    const { user, accessToken, isLoading: authLoading } = useAuth();
+    const [patient, setPatient] = useState<Patient | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-export default async function PatientDetailPage({ params }: PatientDetailPageProps) {
-    let patient;
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, authLoading, router]);
 
-    try {
-        patient = await fetchPatient(params.id);
-    } catch (error) {
-        notFound();
+    // Fetch patient when authenticated
+    useEffect(() => {
+        async function loadPatient() {
+            if (!accessToken || !params.id) return;
+
+            try {
+                setIsLoading(true);
+                setError(null);
+                const data = await fetchPatient(params.id as string, accessToken);
+                setPatient(data);
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : 'Failed to load patient';
+                setError(errorMessage);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        loadPatient();
+    }, [accessToken, params.id]);
+
+    if (authLoading || isLoading) {
+        return (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="text-center">
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800">Error: {error}</p>
+                    <button
+                        onClick={() => router.push('/patients')}
+                        className="mt-4 text-red-600 hover:text-red-700 underline"
+                    >
+                        Back to Patients
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!patient) {
+        return (
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="text-center">
+                    <p className="text-gray-600">Patient not found</p>
+                    <button
+                        onClick={() => router.push('/patients')}
+                        className="mt-4 text-blue-600 hover:text-blue-700 underline"
+                    >
+                        Back to Patients
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
