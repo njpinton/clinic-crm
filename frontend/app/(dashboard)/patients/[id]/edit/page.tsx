@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { PatientForm } from '@/components/patients/PatientForm';
 import { fetchPatient, updatePatient } from '@/lib/api/patients';
 import type { Patient } from '@/types/patient';
@@ -15,16 +16,26 @@ export default function EditPatientPage() {
     const router = useRouter();
     const params = useParams();
     const patientId = params.id as string;
+    const { user, accessToken, isLoading: authLoading } = useAuth();
 
     const [patient, setPatient] = useState<Patient | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, authLoading, router]);
+
     useEffect(() => {
         async function loadPatient() {
+            if (!accessToken) return;
+
             try {
-                const data = await fetchPatient(patientId);
+                const data = await fetchPatient(patientId, accessToken);
                 setPatient(data);
             } catch (err) {
                 console.error('Error fetching patient:', err);
@@ -35,7 +46,7 @@ export default function EditPatientPage() {
         }
 
         loadPatient();
-    }, [patientId]);
+    }, [patientId, accessToken]);
 
     const handleSubmit = async (data: PatientFormValues) => {
         setIsSubmitting(true);
@@ -50,7 +61,7 @@ export default function EditPatientPage() {
                 }
             });
 
-            const updatedPatient = await updatePatient(patientId, filteredData as any);
+            const updatedPatient = await updatePatient(patientId, filteredData as any, accessToken);
 
             // Redirect to the updated patient's detail page
             router.push(`/patients/${updatedPatient.id}`);
