@@ -241,7 +241,7 @@ export async function getLabOrders(options?: {
   testType?: LabTestType;
 }): Promise<LabOrdersResponse> {
   try {
-    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     let filtered = [...mockLabOrders];
 
@@ -286,7 +286,7 @@ export async function createLabOrder(
   token?: string
 ): Promise<LabOrderDetails> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/laboratory/`, {
       method: 'POST',
@@ -341,7 +341,7 @@ export async function updateLabOrder(
   token?: string
 ): Promise<LabOrderDetails> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/laboratory/${id}/`, {
       method: 'PUT',
@@ -379,7 +379,7 @@ export async function updateLabOrder(
 
 export async function deleteLabOrder(id: string, token?: string): Promise<void> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/laboratory/${id}/`, {
       method: 'DELETE',

@@ -132,7 +132,7 @@ export async function getAppointments(options?: {
   patientId?: string;
 }): Promise<AppointmentsResponse> {
   try {
-    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     // Filter mock data based on options
     let filtered = [...mockAppointments];
@@ -181,7 +181,7 @@ export async function createAppointment(
   token?: string
 ): Promise<Appointment> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/appointments/`, {
       method: 'POST',
@@ -232,7 +232,7 @@ export async function updateAppointment(
   token?: string
 ): Promise<Appointment> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/appointments/${id}/`, {
       method: 'PUT',
@@ -269,7 +269,7 @@ export async function updateAppointment(
 
 export async function deleteAppointment(id: string, token?: string): Promise<void> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/appointments/${id}/`, {
       method: 'DELETE',

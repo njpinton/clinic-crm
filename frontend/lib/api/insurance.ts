@@ -147,7 +147,7 @@ export async function getInsurances(options?: {
   provider?: string;
 }): Promise<InsurancesResponse> {
   try {
-    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     let filtered = [...mockInsurances];
 
@@ -188,7 +188,7 @@ export async function createInsurance(
   token?: string
 ): Promise<InsurancePolicy> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/insurance/`, {
       method: 'POST',
@@ -243,7 +243,7 @@ export async function updateInsurance(
   token?: string
 ): Promise<InsurancePolicy> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/insurance/${id}/`, {
       method: 'PUT',
@@ -280,7 +280,7 @@ export async function updateInsurance(
 
 export async function deleteInsurance(id: string, token?: string): Promise<void> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/insurance/${id}/`, {
       method: 'DELETE',

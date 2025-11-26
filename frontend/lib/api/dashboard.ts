@@ -28,7 +28,7 @@ export interface DashboardAppointment {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
     const response = await fetch(`${API_BASE_URL}/api/dashboard/stats/`, {
       method: 'GET',
@@ -62,7 +62,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
 export async function getRecentActivities(): Promise<Activity[]> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
     const response = await fetch(`${API_BASE_URL}/api/dashboard/activities/`, {
       method: 'GET',
@@ -127,7 +127,7 @@ export async function getRecentActivities(): Promise<Activity[]> {
 
 export async function getUpcomingAppointments(): Promise<DashboardAppointment[]> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
     const response = await fetch(`${API_BASE_URL}/api/dashboard/appointments/upcoming/`, {
       method: 'GET',

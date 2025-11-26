@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchPatient } from '@/lib/api/patients';
+import { PatientClinicalNotesTab } from '@/components/clinical-notes/PatientClinicalNotesTab';
 import type { Patient } from '@/types/patient';
 
 export default function PatientDetailPage() {
@@ -224,6 +225,14 @@ export default function PatientDetailPage() {
                         </div>
                     </dl>
                 </div>
+            </div>
+
+            {/* Clinical Notes Section */}
+            <div className="mt-8 bg-white shadow-md rounded-lg overflow-hidden p-6">
+                <PatientClinicalNotesTab
+                    patientId={patient.id}
+                    token={accessToken || undefined}
+                />
             </div>
         </div>
     );

@@ -117,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Manila'  # Philippine Standard Time (PST)
 USE_I18N = True
 USE_TZ = True
 

@@ -234,7 +234,7 @@ export async function getPrescriptions(options?: {
   pharmacyId?: string;
 }): Promise<PrescriptionsResponse> {
   try {
-    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     let filtered = [...mockPrescriptions];
 
@@ -279,7 +279,7 @@ export async function createPrescription(
   token?: string
 ): Promise<Prescription> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/prescriptions/`, {
       method: 'POST',
@@ -334,7 +334,7 @@ export async function updatePrescription(
   token?: string
 ): Promise<Prescription> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/prescriptions/${id}/`, {
       method: 'PUT',
@@ -372,7 +372,7 @@ export async function updatePrescription(
 
 export async function deletePrescription(id: string, token?: string): Promise<void> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/prescriptions/${id}/`, {
       method: 'DELETE',

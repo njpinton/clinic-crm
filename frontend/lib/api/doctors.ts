@@ -192,7 +192,7 @@ export async function getDoctors(options?: {
   status?: DoctorStatus;
 }): Promise<DoctorsResponse> {
   try {
-    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     let filtered = [...mockDoctors];
 
@@ -229,7 +229,7 @@ export async function createDoctor(
   token?: string
 ): Promise<Doctor> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/doctors/`, {
       method: 'POST',
@@ -288,7 +288,7 @@ export async function updateDoctor(
   token?: string
 ): Promise<Doctor> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/doctors/${id}/`, {
       method: 'PUT',
@@ -326,7 +326,7 @@ export async function updateDoctor(
 
 export async function deleteDoctor(id: string, token?: string): Promise<void> {
   try {
-    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null);
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/doctors/${id}/`, {
       method: 'DELETE',
