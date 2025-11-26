@@ -32,7 +32,7 @@ class PatientViewSet(viewsets.ModelViewSet):
     queryset = Patient.objects.all()
     permission_classes = [IsAuthenticated, CanAccessPatient, CanModifyPatient]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['gender', 'city', 'state']
+    filterset_fields = ['gender', 'city', 'province']
     search_fields = ['first_name', 'last_name', 'medical_record_number', 'email']
     ordering_fields = ['last_name', 'first_name', 'date_of_birth', 'created_at']
     ordering = ['last_name', 'first_name']
