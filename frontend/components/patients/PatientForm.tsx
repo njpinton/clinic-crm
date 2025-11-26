@@ -324,6 +324,30 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
                 </div>
             </div>
 
+            {/* Administrative Notes */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Administrative Notes</h3>
+                <div>
+                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                        Notes
+                    </label>
+                    <textarea
+                        {...register('notes')}
+                        id="notes"
+                        rows={4}
+                        placeholder="General notes about the patient (administrative, non-clinical)"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={isSubmitting}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        For clinical notes, use the Clinical Notes feature after creating the patient.
+                    </p>
+                    {errors.notes && (
+                        <p className="mt-1 text-sm text-red-600">{errors.notes.message}</p>
+                    )}
+                </div>
+            </div>
+
             {/* Form Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
                 <button
