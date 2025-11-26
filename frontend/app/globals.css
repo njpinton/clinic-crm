@@ -26,6 +26,38 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+@layer components {
+  /* Ensure all form inputs have dark text to prevent white-on-white visibility issues */
+  input,
+  select,
+  textarea,
+  button[type='button'],
+  button[type='submit'],
+  button[type='reset'] {
+    @apply text-gray-900;
+  }
+
+  /* Placeholder text should be light gray for contrast */
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-gray-400;
+  }
+
+  /* Disabled inputs should have appropriate contrast */
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    @apply bg-gray-100 text-gray-600 cursor-not-allowed;
+  }
+
+  /* Focus states should maintain visibility */
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply text-gray-900;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

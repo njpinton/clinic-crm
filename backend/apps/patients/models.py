@@ -7,6 +7,22 @@ from django.core.validators import RegexValidator
 from apps.core.models import UUIDModel, TimeStampedModel, SoftDeleteModel, SoftDeleteManager, AllObjectsManager
 
 
+def generate_medical_record_number():
+    """Generate a unique medical record number in format MRN-YYYY-XXXXXX."""
+    from datetime import datetime
+    year = datetime.now().year
+
+    # Count existing records for this year
+    from apps.patients.models import Patient
+    count = Patient.all_objects.filter(
+        medical_record_number__startswith=f"MRN-{year}-"
+    ).count()
+
+    # Format: MRN-2025-000001
+    sequence = str(count + 1).zfill(6)
+    return f"MRN-{year}-{sequence}"
+
+
 class Patient(UUIDModel, TimeStampedModel, SoftDeleteModel):
     """
     Patient model with HIPAA-compliant data storage.
@@ -17,7 +33,8 @@ class Patient(UUIDModel, TimeStampedModel, SoftDeleteModel):
         max_length=50,
         unique=True,
         db_index=True,
-        help_text="Unique medical record number (MRN)"
+        default=generate_medical_record_number,
+        help_text="Unique medical record number (MRN) - Auto-generated"
     )
 
     # Personal Information

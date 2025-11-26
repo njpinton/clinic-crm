@@ -23,7 +23,6 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
     } = useForm<PatientFormValues>({
         resolver: zodResolver(patientSchema),
         defaultValues: patient ? {
-            medical_record_number: patient.medical_record_number,
             first_name: patient.first_name,
             middle_name: patient.middle_name || '',
             last_name: patient.last_name,
@@ -49,22 +48,6 @@ export function PatientForm({ patient, onSubmit, isSubmitting = false }: Patient
                 <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="medical_record_number" className="block text-sm font-medium text-gray-700 mb-1">
-                            Medical Record Number <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            {...register('medical_record_number')}
-                            type="text"
-                            id="medical_record_number"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            disabled={isSubmitting}
-                        />
-                        {errors.medical_record_number && (
-                            <p className="mt-1 text-sm text-red-600">{errors.medical_record_number.message}</p>
-                        )}
-                    </div>
-
                     <div>
                         <label htmlFor="date_of_birth" className="block text-sm font-medium text-gray-700 mb-1">
                             Date of Birth <span className="text-red-500">*</span>

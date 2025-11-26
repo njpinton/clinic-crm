@@ -42,7 +42,7 @@ class PatientSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'full_name', 'age']
+        read_only_fields = ['id', 'medical_record_number', 'created_at', 'updated_at', 'full_name', 'age']
 
     def validate_date_of_birth(self, value):
         """Validate that date of birth is not in the future and patient is 18+."""
@@ -62,20 +62,6 @@ class PatientSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Patient must be at least 18 years old.")
 
         return value
-
-    def validate_medical_record_number(self, value):
-        """Validate medical record number format."""
-        if not value or len(value.strip()) == 0:
-            raise serializers.ValidationError("Medical record number is required.")
-
-        # Check for uniqueness on create
-        if not self.instance:  # Creating new patient
-            if Patient.objects.filter(medical_record_number=value).exists():
-                raise serializers.ValidationError(
-                    f"Patient with medical record number {value} already exists."
-                )
-
-        return value.strip().upper()
 
     def validate_email(self, value):
         """Validate and normalize email."""
