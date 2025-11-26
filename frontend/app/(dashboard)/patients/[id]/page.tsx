@@ -10,6 +10,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchPatient } from '@/lib/api/patients';
 import { PatientClinicalNotesTab } from '@/components/clinical-notes/PatientClinicalNotesTab';
+import { ChangeHistorySection } from '@/components/audit/ChangeHistorySection';
 import type { Patient } from '@/types/patient';
 
 export default function PatientDetailPage() {
@@ -225,6 +226,13 @@ export default function PatientDetailPage() {
                         </div>
                     </dl>
                 </div>
+
+                {/* Change History Section - like Odoo */}
+                <ChangeHistorySection
+                    resourceType="Patient"
+                    resourceId={patient.id}
+                    token={accessToken || undefined}
+                />
             </div>
 
             {/* Clinical Notes Section */}
