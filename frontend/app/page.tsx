@@ -86,15 +86,15 @@ export default function HomePage() {
           <div className="space-y-2 text-sm">
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span>Frontend running</span>
+              <span className="text-gray-700">Frontend running</span>
             </div>
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span>Backend API connected</span>
+              <span className="text-gray-700">Backend API connected</span>
             </div>
             <div className="flex items-center">
               <span className="text-green-500 mr-2">✓</span>
-              <span>Supabase database ready</span>
+              <span className="text-gray-700">Supabase database ready</span>
             </div>
           </div>
         </div>
