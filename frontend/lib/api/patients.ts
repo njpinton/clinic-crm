@@ -105,12 +105,18 @@ export async function fetchPatients(params?: {
 /**
  * Fetch a single patient by ID
  */
-export async function fetchPatient(id: string): Promise<Patient> {
+export async function fetchPatient(id: string, token?: string): Promise<Patient> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/${id}/`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
     cache: 'no-store',
   });
@@ -121,12 +127,18 @@ export async function fetchPatient(id: string): Promise<Patient> {
 /**
  * Create a new patient
  */
-export async function createPatient(data: CreatePatientInput): Promise<Patient> {
+export async function createPatient(data: CreatePatientInput, token?: string): Promise<Patient> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
     body: JSON.stringify(data),
   });
@@ -137,12 +149,18 @@ export async function createPatient(data: CreatePatientInput): Promise<Patient> 
 /**
  * Update a patient (full update)
  */
-export async function updatePatient(id: string, data: CreatePatientInput): Promise<Patient> {
+export async function updatePatient(id: string, data: CreatePatientInput, token?: string): Promise<Patient> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/${id}/`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
     body: JSON.stringify(data),
   });
@@ -153,12 +171,18 @@ export async function updatePatient(id: string, data: CreatePatientInput): Promi
 /**
  * Partially update a patient
  */
-export async function patchPatient(id: string, data: UpdatePatientInput): Promise<Patient> {
+export async function patchPatient(id: string, data: UpdatePatientInput, token?: string): Promise<Patient> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/${id}/`, {
     method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
     body: JSON.stringify(data),
   });
@@ -169,12 +193,18 @@ export async function patchPatient(id: string, data: UpdatePatientInput): Promis
 /**
  * Delete a patient (soft delete)
  */
-export async function deletePatient(id: string): Promise<void> {
+export async function deletePatient(id: string, token?: string): Promise<void> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/${id}/`, {
     method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
   });
 
@@ -184,12 +214,18 @@ export async function deletePatient(id: string): Promise<void> {
 /**
  * Restore a soft-deleted patient (admin only)
  */
-export async function restorePatient(id: string): Promise<Patient> {
+export async function restorePatient(id: string, token?: string): Promise<Patient> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_URL}/api/patients/${id}/restore/`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     credentials: 'include',
   });
 
