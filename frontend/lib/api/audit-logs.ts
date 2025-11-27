@@ -79,9 +79,24 @@ export async function getResourceAuditLogs(
   resourceId: string,
   token?: string
 ): Promise<AuditLogsResponse> {
+  // Input validation
+  if (!resourceType || typeof resourceType !== 'string' || resourceType.trim() === '') {
+    throw new Error('Resource type is required and must be a non-empty string');
+  }
+
+  if (!resourceId || typeof resourceId !== 'string' || resourceId.trim() === '') {
+    throw new Error('Resource ID is required and must be a non-empty string');
+  }
+
+  // Basic UUID validation for resource ID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(resourceId)) {
+    throw new Error('Resource ID must be a valid UUID');
+  }
+
   const searchParams = new URLSearchParams();
-  searchParams.append('resource_type', resourceType);
-  searchParams.append('resource_id', resourceId);
+  searchParams.append('resource_type', resourceType.trim());
+  searchParams.append('resource_id', resourceId.trim());
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',

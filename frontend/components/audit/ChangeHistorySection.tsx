@@ -18,6 +18,7 @@ export function ChangeHistorySection({ resourceType, resourceId, token }: Change
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(10); // Show first 10 by default
 
   useEffect(() => {
     async function loadHistory() {
@@ -37,6 +38,9 @@ export function ChangeHistorySection({ resourceType, resourceId, token }: Change
 
     loadHistory();
   }, [resourceType, resourceId, token]);
+
+  const displayedLogs = logs.slice(0, displayLimit);
+  const hasMore = logs.length > displayLimit;
 
   if (isLoading) {
     return (
@@ -91,7 +95,7 @@ export function ChangeHistorySection({ resourceType, resourceId, token }: Change
       {isExpanded && (
         <div className="px-6 pb-4">
           <div className="space-y-3">
-            {logs.map((log) => (
+            {displayedLogs.map((log) => (
               <div key={log.id} className="flex gap-3 text-xs">
                 {/* Icon/Indicator */}
                 <div className="flex-shrink-0 mt-0.5">
@@ -120,13 +124,6 @@ export function ChangeHistorySection({ resourceType, resourceId, token }: Change
                     <p className="mt-1 text-gray-700">{log.details}</p>
                   )}
 
-                  {/* Additional Info (collapsed by default) */}
-                  {log.ip_address && (
-                    <p className="mt-1 text-gray-500">
-                      IP: {log.ip_address}
-                    </p>
-                  )}
-
                   {/* Error Message */}
                   {!log.was_successful && log.error_message && (
                     <p className="mt-1 text-red-600">
@@ -137,6 +134,21 @@ export function ChangeHistorySection({ resourceType, resourceId, token }: Change
               </div>
             ))}
           </div>
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setDisplayLimit(prev => prev + 10)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+                Load More ({logs.length - displayLimit} remaining)
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
