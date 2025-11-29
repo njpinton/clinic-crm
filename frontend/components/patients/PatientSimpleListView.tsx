@@ -28,7 +28,7 @@ export default function PatientSimpleListView({
   const totalPages = Math.ceil(patients.length / itemsPerPage);
 
   function getInitials(firstName: string, lastName: string): string {
-    return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    return `${(firstName || '')[0] || ''}${(lastName || '')[0] || ''}`.toUpperCase();
   }
 
   function getAvatarColor(id: string): string {
@@ -74,8 +74,8 @@ export default function PatientSimpleListView({
   return (
     <div className="space-y-3">
       {paginatedPatients.map((patient) => {
-        const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear();
-        const initials = getInitials(patient.firstName, patient.lastName);
+        const age = new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear();
+        const initials = getInitials(patient.first_name, patient.last_name);
         const avatarColor = getAvatarColor(patient.id);
 
         return (
@@ -94,7 +94,7 @@ export default function PatientSimpleListView({
                 {/* Patient Info */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 text-lg">
-                    {patient.firstName} {patient.lastName}
+                    {patient.first_name} {patient.last_name}
                   </h3>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2 text-sm">
@@ -103,7 +103,7 @@ export default function PatientSimpleListView({
                       <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" />
                       </svg>
-                      <span className="truncate">{patient.medicalRecordNumber}</span>
+                      <span className="truncate">{patient.medical_record_number}</span>
                     </div>
 
                     {/* Age */}
@@ -147,7 +147,7 @@ export default function PatientSimpleListView({
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (confirm(`Are you sure you want to delete ${patient.firstName} ${patient.lastName}?`)) {
+                      if (confirm(`Are you sure you want to delete ${patient.first_name} ${patient.last_name}?`)) {
                         onDelete(patient.id);
                       }
                     }}

@@ -290,3 +290,70 @@ class ClinicalNoteTemplate(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"{self.name} ({self.get_note_type_display()})"
+
+
+class TriageAssessment(UUIDModel, TimeStampedModel, SoftDeleteModel):
+    """
+    Triage assessment performed by a nurse before the doctor encounter.
+    Records vital signs and initial assessment.
+    """
+    appointment = models.OneToOneField(
+        'appointments.Appointment',
+        on_delete=models.CASCADE,
+        related_name='triage_assessment'
+    )
+    
+    performed_by = models.ForeignKey(
+        'users.User',
+        on_delete=models.PROTECT,
+        related_name='performed_triages'
+    )
+    
+    chief_complaint = models.TextField(help_text="Patient's stated reason for visit")
+    
+    # Vital Signs
+    temperature = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        help_text="Temperature in Celsius"
+    )
+    blood_pressure_systolic = models.PositiveIntegerField(null=True, blank=True)
+    blood_pressure_diastolic = models.PositiveIntegerField(null=True, blank=True)
+    heart_rate = models.PositiveIntegerField(null=True, blank=True, help_text="BPM")
+    respiratory_rate = models.PositiveIntegerField(null=True, blank=True, help_text="Breaths per minute")
+    oxygen_saturation = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="SpO2 percentage"
+    )
+    weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Weight in kg"
+    )
+    height = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Height in cm"
+    )
+    
+    notes = models.TextField(blank=True, help_text="Nurse's observations")
+    
+    # Managers
+    from apps.core.models import SoftDeleteManager, AllObjectsManager
+    objects = SoftDeleteManager()
+    all_objects = AllObjectsManager()
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Triage Assessment'
+        verbose_name_plural = 'Triage Assessments'
+
+    def __str__(self):
+        return f"Triage for {self.appointment}"

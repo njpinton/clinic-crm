@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
-from .models import ClinicalNote, SOAPNote, ProgressNote, ClinicalNoteTemplate
+from .models import ClinicalNote, SOAPNote, ProgressNote, ClinicalNoteTemplate, TriageAssessment
 from .serializers import (
     ClinicalNoteDetailSerializer,
     ClinicalNoteListSerializer,
@@ -17,6 +17,7 @@ from .serializers import (
     SOAPNoteSerializer,
     ProgressNoteSerializer,
     ClinicalNoteTemplateSerializer,
+    TriageAssessmentSerializer,
 )
 from apps.core.audit import log_phi_access
 
@@ -36,7 +37,12 @@ class ClinicalNoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Get clinical notes queryset with patient and doctor details."""
-        return ClinicalNote.objects.select_related('patient', 'doctor', 'signed_by').prefetch_related('soap_details', 'progress_details')
+        return ClinicalNote.objects.select_related(
+            'patient', 
+            'doctor', 
+            'doctor__user',
+            'signed_by'
+        ).prefetch_related('soap_details', 'progress_details')
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
@@ -176,7 +182,7 @@ class ClinicalNoteViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='by-patient')
     def by_patient(self, request):
         """Get all clinical notes for a specific patient."""
         patient_id = request.query_params.get('patient_id')
@@ -206,7 +212,7 @@ class ClinicalNoteViewSet(viewsets.ModelViewSet):
         serializer = ClinicalNoteListSerializer(notes, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='by-doctor')
     def by_doctor(self, request):
         """Get all clinical notes written by a specific doctor."""
         doctor_id = request.query_params.get('doctor_id')
@@ -268,3 +274,142 @@ class ClinicalNoteTemplateViewSet(viewsets.ModelViewSet):
         # Set created_by to current user
         request.data['created_by'] = request.user.id
         return super().create(request, *args, **kwargs)
+
+
+class TriageAssessmentViewSet(viewsets.ModelViewSet):
+    """ViewSet for Triage Assessments."""
+    queryset = TriageAssessment.objects.all()
+    serializer_class = TriageAssessmentSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['appointment']
+
+    def perform_create(self, serializer):
+        """Set performed_by to current user and update appointment status."""
+        assessment = serializer.save(performed_by=self.request.user)
+
+        # Update appointment status/urgency
+        appointment = assessment.appointment
+
+        # Simple logic: if fever > 39C or BP > 180/110 -> urgency = 'urgent'
+        is_critical = False
+        if assessment.temperature and assessment.temperature > 39:
+            is_critical = True
+        if assessment.blood_pressure_systolic and assessment.blood_pressure_systolic > 180:
+            is_critical = True
+
+        if is_critical and appointment.urgency == 'routine':
+            appointment.urgency = 'urgent'
+            appointment.save(update_fields=['urgency'])
+
+        # Log PHI access
+        log_phi_access(
+            user=self.request.user,
+            action='CREATE',
+            resource_type='TriageAssessment',
+            resource_id=str(assessment.id),
+            request=self.request,            details=f"Performed triage for appointment {appointment.id}"
+        )
+
+    @action(detail=False, methods=['get'], url_path='by-appointment')
+    def by_appointment(self, request):
+        """
+        Get triage assessment for a specific appointment.
+
+        Query params:
+        - appointment_id: UUID of the appointment
+
+        Example: /api/triage-assessments/by-appointment/?appointment_id=<uuid>
+        """
+        appointment_id = request.query_params.get('appointment_id')
+
+        if not appointment_id:
+            return Response(
+                {'detail': 'appointment_id parameter is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            assessment = TriageAssessment.objects.get(appointment_id=appointment_id)
+
+            # Log PHI access
+            log_phi_access(
+                user=request.user,
+                action='READ',
+                resource_type='TriageAssessment',
+                resource_id=str(assessment.id),
+                request=request,
+                details=f"Viewed triage for appointment {appointment_id}"
+            )
+
+            serializer = TriageAssessmentSerializer(assessment)
+            return Response(serializer.data)
+
+        except TriageAssessment.DoesNotExist:
+            return Response(
+                {'detail': 'Triage assessment not found for this appointment.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Create triage assessment with validation."""
+        from apps.appointments.models import Appointment
+
+        appointment_id = request.data.get('appointment')
+
+        if not appointment_id:
+            return Response(
+                {'detail': 'appointment is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if triage already exists
+        if TriageAssessment.objects.filter(appointment_id=appointment_id).exists():
+            return Response(
+                {'detail': 'Triage assessment already exists for this appointment.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate appointment exists
+        try:
+            appointment = Appointment.objects.get(id=appointment_id)
+        except Appointment.DoesNotExist:
+            return Response(
+                {'detail': 'Appointment not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """Update triage assessment with audit logging."""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        assessment = serializer.save()
+
+        # Update appointment urgency if needed
+        appointment = assessment.appointment
+        is_critical = False
+        if assessment.temperature and assessment.temperature > 39:
+            is_critical = True
+        if assessment.blood_pressure_systolic and assessment.blood_pressure_systolic > 180:
+            is_critical = True
+
+        if is_critical and appointment.urgency == 'routine':
+            appointment.urgency = 'urgent'
+            appointment.save(update_fields=['urgency'])
+
+        # Log PHI access
+        log_phi_access(
+            user=request.user,
+            action='UPDATE',
+            resource_type='TriageAssessment',
+            resource_id=str(assessment.id),
+            request=request,
+            details=f"Updated triage for appointment {appointment.id}"
+        )
+
+        return Response(TriageAssessmentSerializer(assessment).data)

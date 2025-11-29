@@ -46,14 +46,27 @@ export default function PatientsPage() {
     // Fetch patients when authenticated
     useEffect(() => {
         async function loadPatients() {
-            if (!accessToken) return;
+            console.log('loadPatients called. User:', user?.email, 'Role:', user?.role);
+            if (!accessToken) {
+                console.log('No access token available');
+                return;
+            }
 
             try {
                 setIsLoading(true);
                 setError(null);
+                console.log('Fetching patients with token:', accessToken.substring(0, 10) + '...');
                 const data = await fetchPatients({ token: accessToken });
-                setPatients(data.results);
+                console.log('Patients loaded:', data);
+                
+                if (data && Array.isArray(data.results)) {
+                    setPatients(data.results);
+                } else {
+                    console.warn('Unexpected API response format:', data);
+                    setPatients([]);
+                }
             } catch (err) {
+                console.error('Error in loadPatients:', err);
                 const errorMessage = err instanceof Error ? err.message : 'Failed to load patients';
                 setError(errorMessage);
 
@@ -142,7 +155,7 @@ export default function PatientsPage() {
                 <div className="text-center py-12">
                     <div className="text-gray-600">Loading patients...</div>
                 </div>
-            ) : (
+            ) : !error && (
                 /* Patient Views - Conditional rendering based on currentView */
                 <>
                     {currentView === 'grid' && <PatientList patients={patients} />}

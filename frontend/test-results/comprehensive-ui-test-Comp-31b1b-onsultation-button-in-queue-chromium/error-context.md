@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - link "Clinic CRM HIPAA Compliant" [ref=e7] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e9]
+        - generic [ref=e11]:
+          - heading "Clinic CRM" [level=1] [ref=e12]
+          - paragraph [ref=e13]: HIPAA Compliant
+      - navigation [ref=e15]:
+        - link "Dashboard" [ref=e16] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e18]
+          - text: Dashboard
+        - link "Patients" [ref=e20] [cursor=pointer]:
+          - /url: /patients
+          - img [ref=e22]
+          - text: Patients
+        - link "Appointments" [ref=e24] [cursor=pointer]:
+          - /url: /appointments
+          - img [ref=e26]
+          - text: Appointments
+        - link "Doctors" [ref=e28] [cursor=pointer]:
+          - /url: /doctors
+          - img [ref=e30]
+          - text: Doctors
+        - link "Laboratory" [ref=e32] [cursor=pointer]:
+          - /url: /laboratory
+          - img [ref=e34]
+          - text: Laboratory
+        - link "Prescriptions" [ref=e36] [cursor=pointer]:
+          - /url: /prescriptions
+          - img [ref=e38]
+          - text: Prescriptions
+        - link "Insurance" [ref=e40] [cursor=pointer]:
+          - /url: /insurance
+          - img [ref=e42]
+          - text: Insurance
+      - generic [ref=e46]:
+        - generic [ref=e47]: AD
+        - generic [ref=e48]:
+          - paragraph [ref=e49]: Admin User
+          - paragraph [ref=e50]: Administrator
+    - main [ref=e52]:
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - heading "Patients" [level=1] [ref=e56]
+            - paragraph [ref=e57]: Manage patient records and information
+            - paragraph [ref=e58]: Welcome, User (admin)
+          - generic [ref=e59]:
+            - link "Add Patient" [ref=e60] [cursor=pointer]:
+              - /url: /patients/new
+              - img [ref=e61]
+              - text: Add Patient
+            - button "Logout" [ref=e63] [cursor=pointer]
+        - generic [ref=e65]:
+          - button "Grid view" [ref=e66] [cursor=pointer]:
+            - img [ref=e67]
+          - button "Table view" [ref=e69] [cursor=pointer]:
+            - img [ref=e70]
+          - button "List view" [ref=e72] [cursor=pointer]:
+            - img [ref=e73]
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: Search patients
+              - textbox "Search patients" [ref=e79]:
+                - /placeholder: Search by name, MRN, or email...
+            - generic [ref=e80]:
+              - generic [ref=e81]: Filter by gender
+              - combobox "Filter by gender" [ref=e82]:
+                - option "All Genders" [selected]
+                - option "Male"
+                - option "Female"
+                - option "Other"
+                - option "Prefer not to say"
+          - generic [ref=e83]: Showing 1 of 1 patients
+          - 'link "NJ Pinton MRN: MRN-2025-000001 Age 35 DOB: 11/11/1990" [ref=e85] [cursor=pointer]':
+            - /url: /patients/38f4e5cf-a138-4a49-a6ab-c558cced1029
+            - generic [ref=e86]:
+              - generic [ref=e87]:
+                - heading "NJ Pinton" [level=3] [ref=e88]
+                - paragraph [ref=e89]: "MRN: MRN-2025-000001"
+              - generic [ref=e91]: Age 35
+            - generic [ref=e93]:
+              - img [ref=e94]
+              - text: "DOB: 11/11/1990"
+```

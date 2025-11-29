@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'apps.employees',
     'apps.prescriptions',
     'apps.insurance',
+    'apps.billing',
 ]
 
 # Custom User Model

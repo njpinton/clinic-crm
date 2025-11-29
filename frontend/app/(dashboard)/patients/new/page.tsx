@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { PatientForm } from '@/components/patients/PatientForm';
 import { createPatient } from '@/lib/api/patients';
 import type { PatientFormValues } from '@/lib/validations/patient';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Create new patient page.
@@ -12,6 +13,7 @@ import type { PatientFormValues } from '@/lib/validations/patient';
  */
 export default function NewPatientPage() {
     const router = useRouter();
+    const { accessToken } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +30,12 @@ export default function NewPatientPage() {
                 }
             });
 
-            const patient = await createPatient(filteredData);
+            // Ensure token is available
+            if (!accessToken) {
+                throw new Error('Authentication token not found. Please log in again.');
+            }
+
+            const patient = await createPatient(filteredData, accessToken);
 
             // Redirect to the newly created patient's detail page
             router.push(`/patients/${patient.id}`);

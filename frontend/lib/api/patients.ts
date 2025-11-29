@@ -7,8 +7,9 @@ import type { Patient, PatientsResponse } from '@/types/patient';
 import type { CreatePatientInput, UpdatePatientInput } from '@/lib/validations/patient';
 import { handleResponse, API_URL, ApiError } from './client';
 
-// Re-export ApiError for backward compatibility
+// Re-export ApiError and Patient types for backward compatibility
 export { ApiError };
+export type { Patient, PatientsResponse };
 
 /**
  * Fetch all patients with optional filters

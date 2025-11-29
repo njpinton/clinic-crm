@@ -57,6 +57,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [refreshTokenValue, setRefreshTokenValue] = useState<string | null>(null);
 
+  const logout = useCallback(() => {
+    setUser(null);
+    setAccessToken(null);
+    setRefreshTokenValue(null);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    router.push('/login');
+  }, [router]);
+
   // Load auth state from localStorage on mount and register logout callback
   useEffect(() => {
     const storedToken = localStorage.getItem('accessToken');
@@ -134,16 +144,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   };
-
-  const logout = useCallback(() => {
-    setUser(null);
-    setAccessToken(null);
-    setRefreshTokenValue(null);
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
-    router.push('/login');
-  }, [router]);
 
   const refreshToken = async () => {
     if (!refreshTokenValue) {

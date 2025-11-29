@@ -477,6 +477,40 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=False, methods=['get'])
+    def queue(self, request):
+        """
+        Get the patient queue for today.
+        Sorted by: Queue Order (manual) > Urgency > Appointment Time > Check-in Time
+        """
+        from django.db.models import Case, When, Value, IntegerField
+        
+        today = timezone.now().date()
+        
+        queryset = self.get_queryset().filter(
+            appointment_datetime__date=today,
+            status__in=['scheduled', 'confirmed', 'checked_in', 'in_progress']
+        )
+        
+        # Custom ordering for Urgency
+        queryset = queryset.annotate(
+            urgency_priority=Case(
+                When(urgency='emergency', then=Value(0)),
+                When(urgency='urgent', then=Value(1)),
+                When(urgency='routine', then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by(
+            'queue_order',
+            'urgency_priority',
+            'appointment_datetime',
+            'checked_in_at'
+        )
+        
+        serializer = AppointmentListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
     def upcoming(self, request):
         """
         Get upcoming appointments for the current user.
@@ -533,6 +567,125 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             sentry_sdk.capture_exception(e)
             return Response(
                 {'detail': "Error retrieving today's appointments."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=True, methods=['post'])
+    def start_consultation(self, request, pk=None):
+        """
+        Start consultation with a patient.
+        Updates appointment status from 'checked_in' to 'in_progress'.
+        Only doctors can start consultations.
+        """
+        try:
+            appointment = self.get_object()
+
+            # Validate user is a doctor
+            if request.user.role not in ['doctor', 'admin']:
+                return Response(
+                    {'detail': 'Only doctors can start consultations.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Validate status
+            if appointment.status not in ['checked_in', 'scheduled', 'confirmed']:
+                return Response(
+                    {'detail': f'Cannot start consultation with status: {appointment.status}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Start consultation
+            appointment.status = 'in_progress'
+            appointment.save(update_fields=['status'])
+
+            # HIPAA Audit Logging
+            log_phi_access(
+                user=request.user,
+                action='UPDATE',
+                resource_type='Appointment',
+                resource_id=str(appointment.id),
+                request=request,
+                details=f'Started consultation with patient: {appointment.patient.full_name}'
+            )
+
+            serializer = AppointmentSerializer(appointment)
+            return Response(serializer.data)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error starting consultation.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def reorder_queue(self, request):
+        """
+        Manually reorder the patient queue.
+        Accepts a list of appointment IDs with their new queue positions.
+
+        Request body:
+        {
+            "queue": [
+                {"id": "uuid1", "queue_order": 1},
+                {"id": "uuid2", "queue_order": 2},
+                ...
+            ]
+        }
+
+        Only staff (receptionist, nurse, admin) can reorder the queue.
+        """
+        try:
+            # Validate user role
+            if request.user.role not in ['receptionist', 'nurse', 'admin']:
+                return Response(
+                    {'detail': 'Only staff can reorder the queue.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Validate request data
+            queue_data = request.data.get('queue', [])
+            if not isinstance(queue_data, list):
+                return Response(
+                    {'detail': 'Queue must be a list of appointment objects.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Update queue orders
+            updated_count = 0
+            for item in queue_data:
+                appointment_id = item.get('id')
+                queue_order = item.get('queue_order')
+
+                if not appointment_id or queue_order is None:
+                    continue
+
+                try:
+                    appointment = Appointment.objects.get(id=appointment_id)
+                    appointment.queue_order = queue_order
+                    appointment.save(update_fields=['queue_order'])
+                    updated_count += 1
+                except Appointment.DoesNotExist:
+                    continue
+
+            # HIPAA Audit Logging
+            log_phi_access(
+                user=request.user,
+                action='UPDATE',
+                resource_type='Appointment',
+                resource_id=None,
+                request=request,
+                details=f'Reordered queue: {updated_count} appointments updated'
+            )
+
+            return Response({
+                'message': f'Successfully reordered {updated_count} appointments',
+                'updated_count': updated_count
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error reordering queue.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

@@ -35,6 +35,12 @@ class Appointment(UUIDModel, TimeStampedModel, SoftDeleteModel):
         ('telemedicine', 'Telemedicine'),
     ]
 
+    URGENCY_CHOICES = [
+        ('routine', 'Routine'),
+        ('urgent', 'Urgent'),
+        ('emergency', 'Emergency'),
+    ]
+
     # Relationships
     patient = models.ForeignKey(
         'patients.Patient',
@@ -66,6 +72,18 @@ class Appointment(UUIDModel, TimeStampedModel, SoftDeleteModel):
         default='scheduled',
         db_index=True
     )
+
+    urgency = models.CharField(
+        max_length=20,
+        choices=URGENCY_CHOICES,
+        default='routine',
+        db_index=True
+    )
+
+    is_walk_in = models.BooleanField(default=False)
+    
+    # For manual queue reordering (lower number = higher priority)
+    queue_order = models.IntegerField(default=0, help_text="Manual override for queue position")
 
     # Reason and notes
     reason = models.TextField(help_text="Reason for visit")

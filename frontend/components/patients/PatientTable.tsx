@@ -32,16 +32,16 @@ export default function PatientTable({
 
       switch (sortField) {
         case 'name':
-          aVal = `${a.firstName} ${a.lastName}`;
-          bVal = `${b.firstName} ${b.lastName}`;
+          aVal = `${a.first_name} ${a.last_name}`;
+          bVal = `${b.first_name} ${b.last_name}`;
           break;
         case 'mrn':
-          aVal = a.medicalRecordNumber;
-          bVal = b.medicalRecordNumber;
+          aVal = a.medical_record_number;
+          bVal = b.medical_record_number;
           break;
         case 'dob':
-          aVal = new Date(a.dateOfBirth).getTime();
-          bVal = new Date(b.dateOfBirth).getTime();
+          aVal = new Date(a.date_of_birth).getTime();
+          bVal = new Date(b.date_of_birth).getTime();
           break;
         case 'phone':
           aVal = a.phone;
@@ -183,8 +183,8 @@ export default function PatientTable({
           </thead>
           <tbody>
             {paginatedPatients.map((patient, index) => {
-              const age = new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear();
-              const dob = new Date(patient.dateOfBirth);
+              const age = new Date().getFullYear() - new Date(patient.date_of_birth).getFullYear();
+              const dob = new Date(patient.date_of_birth);
               const dobString = dob.toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
@@ -198,10 +198,10 @@ export default function PatientTable({
                 >
                   <td className="px-6 py-4">
                     <Link href={`/patients/${patient.id}`} className="font-medium text-blue-600 hover:text-blue-700">
-                      {patient.firstName} {patient.lastName}
+                      {patient.first_name} {patient.last_name}
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{patient.medicalRecordNumber}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{patient.medical_record_number}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     <div>{dobString}</div>
                     <div className="text-xs text-gray-400">{age} years old</div>
@@ -219,7 +219,7 @@ export default function PatientTable({
                       {onDelete && (
                         <button
                           onClick={() => {
-                            if (confirm(`Are you sure you want to delete ${patient.firstName} ${patient.lastName}?`)) {
+                            if (confirm(`Are you sure you want to delete ${patient.first_name} ${patient.last_name}?`)) {
                               onDelete(patient.id);
                             }
                           }}

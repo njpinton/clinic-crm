@@ -40,12 +40,12 @@ export default function AuditLogsPage() {
     return logs.filter(log => {
       const matchesSearch =
         searchTerm === '' ||
-        log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.ipAddress?.includes(searchTerm);
+        log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.ip_address?.includes(searchTerm);
 
       const matchesAction = actionFilter === '' || log.action === actionFilter;
-      const matchesResource = resourceFilter === '' || log.resource === resourceFilter;
+      const matchesResource = resourceFilter === '' || log.resource_type === resourceFilter;
 
       return matchesSearch && matchesAction && matchesResource;
     });
@@ -56,7 +56,7 @@ export default function AuditLogsPage() {
   }, [logs]);
 
   const resources = useMemo(() => {
-    return [...new Set(logs.map(l => l.resource))].sort();
+    return [...new Set(logs.map(l => l.resource_type))].sort();
   }, [logs]);
 
   const formatTimestamp = (dateString: string) => {
@@ -170,20 +170,20 @@ export default function AuditLogsPage() {
                     <tbody>
                       {filteredLogs.map((log) => (
                         <tr key={log.id} className="border-b border-gray-200 hover:bg-gray-50">
-                          <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{formatTimestamp(log.timestamp)}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{log.userName}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{formatTimestamp(log.created_at)}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{log.user}</td>
                           <td className="px-6 py-4 text-sm">
                             <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getActionColor(log.action)}`}>
                               {log.action}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm">
-                            <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getResourceColor(log.resource)}`}>
-                              {log.resource.replace('-', ' ')}
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getResourceColor(log.resource_type)}`}>
+                              {log.resource_type.replace('_', ' ').replace('-', ' ')}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{log.description}</td>
-                          <td className="px-6 py-4 text-sm font-mono text-gray-600">{log.ipAddress || '—'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{log.details}</td>
+                          <td className="px-6 py-4 text-sm font-mono text-gray-600">{log.ip_address || '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -201,7 +201,7 @@ export default function AuditLogsPage() {
               <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <p className="text-gray-600 text-sm">Unique Users</p>
                 <p className="text-3xl font-bold text-blue-600 mt-2">
-                  {[...new Set(logs.map(l => l.userId))].length}
+                  {[...new Set(logs.map(l => l.user))].length}
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg border border-gray-200">

@@ -131,3 +131,18 @@ export function getActionColor(action: AuditAction): string {
   };
   return colors[action];
 }
+
+/**
+ * Get color class for resource type badge
+ */
+export function getResourceColor(resourceType: string): string {
+  const colors: Record<string, string> = {
+    'patient': 'bg-blue-100 text-blue-800',
+    'appointment': 'bg-green-100 text-green-800',
+    'clinical_note': 'bg-purple-100 text-purple-800',
+    'user': 'bg-orange-100 text-orange-800',
+    'document': 'bg-pink-100 text-pink-800',
+    'lab_result': 'bg-indigo-100 text-indigo-800'
+  };
+  return colors[resourceType.toLowerCase()] || 'bg-gray-100 text-gray-800';
+}

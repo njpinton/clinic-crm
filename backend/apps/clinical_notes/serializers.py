@@ -4,7 +4,7 @@ Handles serialization/deserialization of clinical notes, SOAP notes, and progres
 """
 from rest_framework import serializers
 from django.utils import timezone
-from .models import ClinicalNote, SOAPNote, ProgressNote, ClinicalNoteTemplate
+from .models import ClinicalNote, SOAPNote, ProgressNote, ClinicalNoteTemplate, TriageAssessment
 from apps.patients.serializers import PatientSerializer
 from apps.doctors.serializers import DoctorListSerializer
 from apps.users.serializers import UserListSerializer
@@ -142,7 +142,7 @@ class ClinicalNoteListSerializer(serializers.ModelSerializer):
     """List serializer for clinical notes (lighter weight)."""
 
     patient_name = serializers.CharField(source='patient.full_name', read_only=True)
-    doctor_name = serializers.CharField(source='doctor.get_full_name', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.full_name', read_only=True)
     note_type_display = serializers.CharField(source='get_note_type_display', read_only=True)
 
     class Meta:
@@ -158,7 +158,17 @@ class ClinicalNoteListSerializer(serializers.ModelSerializer):
             'is_signed',
             'created_at',
         ]
-        read_only_fields = fields
+        read_only_fields = [
+            'id',
+            'patient_name',
+            'doctor_name',
+            'note_type',
+            'note_type_display',
+            'note_date',
+            'chief_complaint',
+            'is_signed',
+            'created_at',
+        ]
 
 
 class ClinicalNoteCreateUpdateSerializer(serializers.ModelSerializer):
@@ -251,3 +261,19 @@ class ClinicalNoteTemplateSerializer(serializers.ModelSerializer):
             'created_at',
         ]
         read_only_fields = ['id', 'created_at', 'created_by_name']
+
+
+class TriageAssessmentSerializer(serializers.ModelSerializer):
+    """Serializer for Triage Assessments."""
+    performed_by_name = serializers.CharField(source='performed_by.get_full_name', read_only=True)
+    
+    class Meta:
+        model = TriageAssessment
+        fields = [
+            'id', 'appointment', 'performed_by', 'performed_by_name',
+            'chief_complaint', 'temperature', 'blood_pressure_systolic',
+            'blood_pressure_diastolic', 'heart_rate', 'respiratory_rate',
+            'oxygen_saturation', 'weight', 'height', 'notes',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['performed_by', 'created_at', 'updated_at']

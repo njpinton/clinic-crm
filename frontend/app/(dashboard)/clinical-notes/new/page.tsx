@@ -6,25 +6,29 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { createClinicalNote, getNoteTypes, getNoteTypeDisplay, CreateClinicalNoteInput, NoteType, VitalSigns, SOAPNoteDetails, ProgressNoteDetails } from '@/lib/api/clinical-notes';
 import { fetchPatients, Patient } from '@/lib/api/patients';
 import { fetchDoctors, DoctorListResponse } from '@/lib/api/doctors';
 import { VitalSignsForm } from '@/components/clinical-notes/VitalSignsForm';
-import { useSession } from 'next-auth/react';
 
 export default function CreateClinicalNotePage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const { accessToken } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<any[]>([]);
 
+  // Pre-fill patient_id from URL if available
+  const initialPatientId = searchParams.get('patient_id') || '';
+  
   // Form state
   const [formData, setFormData] = useState<CreateClinicalNoteInput>({
-    patient_id: '',
+    patient_id: initialPatientId,
     doctor_id: '',
     note_type: 'soap',
     note_date: new Date().toISOString().split('T')[0],
@@ -43,11 +47,12 @@ export default function CreateClinicalNotePage() {
   // Fetch patients and doctors
   useEffect(() => {
     const loadData = async () => {
+      if (!accessToken) return; // Ensure token is available
       try {
         setIsFetching(true);
         const [patientsRes, doctorsRes] = await Promise.all([
-          fetchPatients({ limit: 1000, token: session?.user?.accessToken }),
-          fetchDoctors({ limit: 1000, token: session?.user?.accessToken })
+          fetchPatients({ token: accessToken }),
+          fetchDoctors({ token: accessToken })
         ]);
         setPatients(patientsRes.results);
         setDoctors(doctorsRes.results);
@@ -59,10 +64,10 @@ export default function CreateClinicalNotePage() {
       }
     };
 
-    if (session?.user?.accessToken) {
+    if (accessToken) { // Only fetch if accessToken is available
       loadData();
     }
-  }, [session]);
+  }, [accessToken]);
 
   const handleVitalSignChange = (field: keyof VitalSigns, value: number | undefined) => {
     setVitalSigns(prev => ({
@@ -110,7 +115,7 @@ export default function CreateClinicalNotePage() {
         progress_details: formData.note_type === 'progress' ? progressDetails as Partial<ProgressNoteDetails> : undefined
       };
 
-      const note = await createClinicalNote(payload, session?.user?.accessToken);
+      const note = await createClinicalNote(payload, accessToken);
 
       // Redirect to the created note
       router.push(`/clinical-notes/${note.id}`);

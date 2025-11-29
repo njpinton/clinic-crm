@@ -243,3 +243,90 @@ class PatientViewSet(viewsets.ModelViewSet):
                 {'error': 'Failed to restore patient'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    @action(detail=False, methods=['get'])
+    def search(self, request):
+        """
+        Advanced patient search for secretary registration workflow.
+
+        Search by:
+        - name (first_name or last_name)
+        - medical_record_number (MRN)
+        - phone
+        - date_of_birth
+        - email
+
+        Query params:
+        - q: General search query (searches name, MRN, email)
+        - phone: Exact phone number match
+        - dob: Date of birth (YYYY-MM-DD)
+        - mrn: Medical record number
+
+        Example: /api/patients/search/?q=John&dob=1990-01-15
+        """
+        from django.db.models import Q
+        from datetime import datetime
+
+        try:
+            queryset = self.get_queryset()
+
+            # General search query
+            q = request.query_params.get('q', '').strip()
+            if q:
+                queryset = queryset.filter(
+                    Q(first_name__icontains=q) |
+                    Q(last_name__icontains=q) |
+                    Q(middle_name__icontains=q) |
+                    Q(medical_record_number__icontains=q) |
+                    Q(email__icontains=q)
+                )
+
+            # Phone number search (exact or contains)
+            phone = request.query_params.get('phone', '').strip()
+            if phone:
+                # Remove common formatting characters
+                phone_clean = phone.replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+                queryset = queryset.filter(phone__icontains=phone_clean)
+
+            # Date of birth search (exact match)
+            dob = request.query_params.get('dob', '').strip()
+            if dob:
+                try:
+                    dob_date = datetime.strptime(dob, '%Y-%m-%d').date()
+                    queryset = queryset.filter(date_of_birth=dob_date)
+                except ValueError:
+                    return Response(
+                        {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Medical record number (exact match)
+            mrn = request.query_params.get('mrn', '').strip()
+            if mrn:
+                queryset = queryset.filter(medical_record_number__iexact=mrn)
+
+            # Limit results to 20 for performance
+            queryset = queryset[:20]
+
+            # Log search
+            log_phi_access(
+                user=request.user,
+                action='LIST',
+                resource_type='Patient',
+                resource_id=None,
+                request=request,
+                details=f'Patient search: q={q}, phone={phone}, dob={dob}, mrn={mrn}'
+            )
+
+            serializer = PatientListSerializer(queryset, many=True)
+            return Response({
+                'count': len(serializer.data),
+                'results': serializer.data
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'error': 'Failed to search patients'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

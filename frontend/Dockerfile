@@ -8,7 +8,8 @@ WORKDIR /app
 
 # Install dependencies
 COPY package.json ./
-RUN npm install
+# Skip optional dependencies like sentry-cli which may fail to download
+RUN npm install --omit=optional --legacy-peer-deps || npm install --legacy-peer-deps --force
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -18,7 +19,8 @@ COPY . .
 
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED 1
-ENV NEXT_PUBLIC_API_URL=http://backend:8000
+ENV NEXT_PUBLIC_API_URL=https://clinic-backend-300842021131.us-central1.run.app
+ENV API_URL=https://clinic-backend-300842021131.us-central1.run.app
 
 RUN npm run build
 
@@ -43,4 +45,5 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+# Support PORT environment variable for Cloud Run
+CMD ["node", "--", "server.js"]

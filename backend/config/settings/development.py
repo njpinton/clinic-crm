@@ -8,17 +8,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', '0.0.0.0']
 
-# Database - Use SQLite for local development/testing (no Supabase required)
-# This overrides the base.py database configuration
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if not DATABASE_URL or DATABASE_URL.startswith('sqlite'):
-    # Use SQLite for testing - simple and no external dependencies
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+# Database - Use Supabase PostgreSQL if DATABASE_URL is set, otherwise use SQLite
+# This allows overriding the base.py database configuration if a Supabase DATABASE_URL is provided.
+# If no DATABASE_URL is provided, it will fall back to SQLite for local development.
 
 # CORS - Allow all origins in development
 CORS_ALLOWED_ORIGINS = [

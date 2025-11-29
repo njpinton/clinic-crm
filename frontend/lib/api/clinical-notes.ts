@@ -178,7 +178,8 @@ export async function fetchClinicalNotes(
     cache: 'no-cache'
   });
 
-  return handleResponse<ClinicalNotesResponse>(response);
+  const data = await handleResponse<any>(response);
+  return Array.isArray(data) ? { count: data.length, results: data } : data;
 }
 
 export async function fetchClinicalNote(
@@ -220,7 +221,8 @@ export async function fetchClinicalNotesByPatient(
     cache: 'no-cache'
   });
 
-  return handleResponse<ClinicalNotesResponse>(response);
+  const data = await handleResponse<any>(response);
+  return Array.isArray(data) ? { count: data.length, results: data } : data;
 }
 
 export async function fetchClinicalNotesByDoctor(
@@ -246,7 +248,8 @@ export async function fetchClinicalNotesByDoctor(
     cache: 'no-cache'
   });
 
-  return handleResponse<ClinicalNotesResponse>(response);
+  const data = await handleResponse<any>(response);
+  return Array.isArray(data) ? { count: data.length, results: data } : data;
 }
 
 export async function updateClinicalNote(
@@ -337,3 +340,6 @@ export function getNoteTypeColor(type: NoteType): string {
   };
   return colors[type];
 }
+
+// Alias for compatibility
+export const getClinicalNotes = fetchClinicalNotes;

@@ -360,3 +360,7 @@ export function getSpecialties(): string[] {
 export function getStatuses(): DoctorStatus[] {
   return ['active', 'inactive', 'on-leave', 'retired'];
 }
+
+// Alias for compatibility
+export const fetchDoctors = getDoctors;
+export const DoctorListResponse = DoctorsResponse;

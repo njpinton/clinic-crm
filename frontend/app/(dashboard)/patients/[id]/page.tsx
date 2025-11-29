@@ -123,6 +123,24 @@ export default function PatientDetailPage() {
                 </div>
             </div>
 
+            {/* Quick Actions */}
+            <div className="flex gap-3 mb-8">
+                <Link
+                    href={`/clinical-notes/new?patient_id=${patient.id}`}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
+                >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Create New Note
+                </Link>
+                <Link
+                    href={`/appointments/new?patient_id=${patient.id}`}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors text-sm"
+                >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Schedule New Appointment
+                </Link>
+            </div>
+
             {/* Patient Information */}
             <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 {/* Personal Information */}
