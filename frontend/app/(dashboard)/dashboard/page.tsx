@@ -146,7 +146,7 @@ export default function DashboardPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back, {user.firstName || user.email}!</p>
+          <p className="text-gray-600 mt-1">Welcome back, {user.first_name || user.email}!</p>
         </div>
 
         {/* Stats Cards */}

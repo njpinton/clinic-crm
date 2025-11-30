@@ -7,26 +7,22 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 DEBUG = False
 
-# Must be set via environment variable
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get('ALLOWED_HOSTS', '').split(',')
-    if host.strip()
-]
+# Allow all hosts for Cloud Run (Cloud Run proxy handles security)
+ALLOWED_HOSTS = ['*']
 
-# CORS settings - must be set via environment variable
+# CORS settings - allow frontend
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')
     if origin.strip()
 ]
-
-# If no ALLOWED_HOSTS are set, raise an error (security)
-if not ALLOWED_HOSTS:
-    raise ValueError(
-        "ALLOWED_HOSTS environment variable must be set in production. "
-        "Example: ALLOWED_HOSTS=your-backend.vercel.app,your-frontend.vercel.app"
-    )
+# Always allow localhost and the Cloud Run frontend
+if not CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS = [
+        'https://clinic-frontend-300842021131.us-central1.run.app',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ]
 
 # Security settings
 SECURE_SSL_REDIRECT = True

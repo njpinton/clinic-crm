@@ -160,7 +160,8 @@ export async function getInsurances(options?: {
     }
 
     if (options?.provider) {
-      filtered = filtered.filter(i => i.provider.toLowerCase().includes(options.provider.toLowerCase()));
+      const provider = options.provider;
+      filtered = filtered.filter(i => i.provider.toLowerCase().includes(provider.toLowerCase()));
     }
 
     return {

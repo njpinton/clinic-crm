@@ -6,10 +6,10 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
-import { getClinicalNotes, ClinicalNote, getNoteTypeColor } from '@/lib/api/clinical-notes';
+import { getClinicalNotes, ClinicalNotesList, getNoteTypeColor } from '@/lib/api/clinical-notes';
 
 export default function ClinicalNotesPage() {
-  const [notes, setNotes] = useState<ClinicalNote[]>([]);
+  const [notes, setNotes] = useState<ClinicalNotesList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,17 +39,17 @@ export default function ClinicalNotesPage() {
     return notes.filter(note => {
       const matchesSearch =
         searchTerm === '' ||
-        note.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.title.toLowerCase().includes(searchTerm.toLowerCase());
+        note.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (note.chief_complaint && note.chief_complaint.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const matchesType = typeFilter === '' || note.noteType === typeFilter;
+      const matchesType = typeFilter === '' || note.note_type === typeFilter;
 
       return matchesSearch && matchesType;
     });
   }, [notes, searchTerm, typeFilter]);
 
   const noteTypes = useMemo(() => {
-    return [...new Set(notes.map(n => n.noteType))].sort();
+    return [...new Set(notes.map(n => n.note_type_display))].sort();
   }, [notes]);
 
   const formatDate = (dateString: string) => {
@@ -135,21 +135,23 @@ export default function ClinicalNotesPage() {
                   <div key={note.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">{note.title}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{note.note_type_display}</h3>
                         <p className="text-sm text-gray-600 mt-1">
-                          {note.patientName} • {note.doctorName}
+                          {note.patient_name} • {note.doctor_name}
                         </p>
                       </div>
-                      <span className={`inline-block px-3 py-1 rounded text-xs font-semibold ${getNoteTypeColor(note.noteType)}`}>
-                        {note.noteType.toUpperCase()}
+                      <span className={`inline-block px-3 py-1 rounded text-xs font-semibold ${getNoteTypeColor(note.note_type)}`}>
+                        {note.note_type_display.toUpperCase()}
                       </span>
                     </div>
-                    <div className="text-gray-700 mb-4 whitespace-pre-wrap text-sm leading-relaxed">
-                      {note.content}
-                    </div>
+                    {note.chief_complaint && (
+                      <div className="text-gray-700 mb-4 text-sm leading-relaxed">
+                        <strong>Chief Complaint:</strong> {note.chief_complaint}
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                      <span className="text-xs text-gray-500">Visit: {formatDate(note.visitDate)}</span>
-                      <span className="text-xs text-gray-500">Last updated: {formatDate(note.updatedAt)}</span>
+                      <span className="text-xs text-gray-500">Date: {formatDate(note.note_date)}</span>
+                      <span className="text-xs text-gray-500">Created: {formatDate(note.created_at)}</span>
                     </div>
                   </div>
                 ))
@@ -168,7 +170,7 @@ export default function ClinicalNotesPage() {
               </div>
               <div className="bg-white p-6 rounded-lg border border-gray-200">
                 <p className="text-gray-600 text-sm">Unique Patients</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{[...new Set(notes.map(n => n.patientId))].length}</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{[...new Set(notes.map(n => n.patient_name))].length}</p>
               </div>
             </div>
           </>

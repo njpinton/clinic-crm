@@ -76,7 +76,7 @@ export default function LabOrderForm({
     if (name === 'testType') {
       setFormData(prev => ({
         ...prev,
-        [name]: value,
+        testType: value as any,
         tests: [] // Reset tests when type changes
       }));
       setSelectedTests([]);

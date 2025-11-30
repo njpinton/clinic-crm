@@ -111,7 +111,7 @@ export default function PatientsPage() {
                     </p>
                     {user && (
                         <p className="mt-1 text-sm text-gray-500">
-                            Welcome, {user.first_name || user.firstName} {user.last_name || user.lastName} ({user.role})
+                            Welcome, {user.first_name || user.first_name} {user.last_name || user.last_name} ({user.role})
                         </p>
                     )}
                 </div>

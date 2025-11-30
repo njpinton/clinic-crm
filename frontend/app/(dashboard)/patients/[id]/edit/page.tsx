@@ -61,7 +61,7 @@ export default function EditPatientPage() {
                 }
             });
 
-            const updatedPatient = await updatePatient(patientId, filteredData as any, accessToken);
+            const updatedPatient = await updatePatient(patientId, filteredData as any, accessToken || undefined);
 
             // Redirect to the updated patient's detail page
             router.push(`/patients/${updatedPatient.id}`);

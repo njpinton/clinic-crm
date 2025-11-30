@@ -21,14 +21,13 @@ export default function DailyQueueCard({
     new Date(apt.dateTime).toDateString() === today
   ).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
-  // Mocking some "Checked In" status since the API only returns scheduled/confirmed
-  // In a real app, this would come from the backend status
+  // Status color mapping
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'checked-in': return 'bg-green-100 text-green-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
       case 'scheduled': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -36,36 +35,27 @@ export default function DailyQueueCard({
   const getAction = (apt: DashboardAppointment) => {
     if (apt.status === 'scheduled' || apt.status === 'confirmed') {
       return (
-        <button className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors">
-          Check In
-        </button>
-      );
-    } else if (apt.status === 'checked-in') {
-       return (
-        <Link 
-          href={`/triage/${apt.id}`}
-          className="text-xs bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 transition-colors"
+        <Link
+          href={`/appointments/${apt.id}`}
+          className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
         >
-          Triage
-        </Link>
-      );
-    } else if (apt.status === 'in-progress') {
-       return (
-        <Link 
-          href={`/clinical-notes/new?appointment=${apt.id}`}
-          className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
-        >
-          Doctor Visit
+          View Details
         </Link>
       );
     } else if (apt.status === 'completed') {
-       return (
-        <Link 
-          href={`/billing/${apt.id}`}
-          className="text-xs bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition-colors"
+      return (
+        <Link
+          href={`/clinical-notes`}
+          className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
         >
-          Bill
+          View Notes
         </Link>
+      );
+    } else if (apt.status === 'cancelled') {
+       return (
+        <span className="text-xs text-gray-500 px-3 py-1">
+          Cancelled
+        </span>
       );
     }
     return null;

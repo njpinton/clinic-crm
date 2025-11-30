@@ -115,7 +115,7 @@ export default function CreateClinicalNotePage() {
         progress_details: formData.note_type === 'progress' ? progressDetails as Partial<ProgressNoteDetails> : undefined
       };
 
-      const note = await createClinicalNote(payload, accessToken);
+      const note = await createClinicalNote(payload, accessToken || undefined);
 
       // Redirect to the created note
       router.push(`/clinical-notes/${note.id}`);
@@ -182,7 +182,7 @@ export default function CreateClinicalNotePage() {
                   <option value="">Select a patient...</option>
                   {patients.map(patient => (
                     <option key={patient.id} value={patient.id}>
-                      {patient.full_name} (MRN: {patient.mrn})
+                      {patient.full_name} (MRN: {patient.medical_record_number})
                     </option>
                   ))}
                 </select>

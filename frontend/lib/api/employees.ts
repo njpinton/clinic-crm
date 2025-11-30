@@ -117,7 +117,8 @@ export async function getEmployees(options?: {
     }
 
     if (options?.department) {
-      filtered = filtered.filter(e => e.department.toLowerCase().includes(options.department.toLowerCase()));
+      const dept = options.department;
+      filtered = filtered.filter(e => e.department.toLowerCase().includes(dept.toLowerCase()));
     }
 
     return {

@@ -31,25 +31,33 @@ export interface DoctorAvailability {
 
 export interface Doctor {
   id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  specialty: string;
-  credentials: DoctorCredential;
-  availability: DoctorAvailability;
-  status: DoctorStatus;
+  full_name: string;
+  user_details?: {
+    id: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    phone: string;
+  };
+  license_number: string;
+  npi_number?: string;
+  dea_number?: string;
+  specializations?: Array<{ id: string; name: string }>;
+  board_certified?: boolean;
+  years_of_experience?: number;
+  consultation_fee?: string;
+  is_accepting_patients?: boolean;
   bio?: string;
-  profileImage?: string;
-  yearsOfExperience?: number;
-  department?: string;
-  createdAt: string;
-  updatedAt: string;
+  education?: string;
+  languages?: string;
+  credentials?: DoctorCredential[];
+  status?: DoctorStatus;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface DoctorCreatePayload {
-  firstName: string;
-  lastName: string;
+  full_name: string;
   email: string;
   phone: string;
   specialty: string;
@@ -87,102 +95,27 @@ const specialties = [
 const mockDoctors: Doctor[] = [
   {
     id: 'doc-1',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    email: 'sarah.johnson@clinic.com',
-    phone: '(555) 123-4567',
-    specialty: 'Cardiology',
-    credentials: {
-      licenseNumber: 'MD-12345',
-      licenseState: 'CA',
-      deaNumber: 'DJ1234567',
-      npiNumber: '1234567890'
+    full_name: 'Dr. Sarah Johnson',
+    user_details: {
+      id: 'user-1',
+      email: 'sarah.johnson@clinic.com',
+      first_name: 'Sarah',
+      last_name: 'Johnson',
+      phone: '(555) 123-4567'
     },
-    availability: {
-      mondayStart: '08:00',
-      mondayEnd: '17:00',
-      tuesdayStart: '08:00',
-      tuesdayEnd: '17:00',
-      wednesdayStart: '08:00',
-      wednesdayEnd: '17:00',
-      thursdayStart: '08:00',
-      thursdayEnd: '17:00',
-      fridayStart: '08:00',
-      fridayEnd: '17:00'
-    },
-    status: 'active',
+    license_number: 'MD-12345',
+    dea_number: 'DJ1234567',
+    npi_number: '1234567890',
+    board_certified: true,
+    years_of_experience: 15,
+    consultation_fee: '150.00',
+    is_accepting_patients: true,
     bio: 'Board-certified cardiologist with 15 years of experience',
-    yearsOfExperience: 15,
-    department: 'Cardiology',
-    boardCertifications: ['American Board of Internal Medicine', 'American Board of Cardiovascular Disease'],
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-11-25T12:00:00Z'
-  },
-  {
-    id: 'doc-2',
-    firstName: 'Michael',
-    lastName: 'Chen',
-    email: 'michael.chen@clinic.com',
-    phone: '(555) 234-5678',
-    specialty: 'Orthopedics',
-    credentials: {
-      licenseNumber: 'MD-12346',
-      licenseState: 'CA',
-      deaNumber: 'DJ1234568',
-      npiNumber: '1234567891'
-    },
-    availability: {
-      mondayStart: '09:00',
-      mondayEnd: '18:00',
-      tuesdayStart: '09:00',
-      tuesdayEnd: '18:00',
-      wednesdayStart: '09:00',
-      wednesdayEnd: '18:00',
-      thursdayStart: '09:00',
-      thursdayEnd: '18:00',
-      fridayStart: '09:00',
-      fridayEnd: '18:00'
-    },
-    status: 'active',
-    bio: 'Specialized in orthopedic surgery and sports medicine',
-    yearsOfExperience: 12,
-    department: 'Orthopedics',
-    boardCertifications: ['American Board of Orthopedic Surgery'],
-    createdAt: '2024-02-10T08:00:00Z',
-    updatedAt: '2024-11-25T12:00:00Z'
-  },
-  {
-    id: 'doc-3',
-    firstName: 'Emily',
-    lastName: 'Brown',
-    email: 'emily.brown@clinic.com',
-    phone: '(555) 345-6789',
-    specialty: 'Pediatrics',
-    credentials: {
-      licenseNumber: 'MD-12347',
-      licenseState: 'CA',
-      deaNumber: 'DJ1234569',
-      npiNumber: '1234567892'
-    },
-    availability: {
-      mondayStart: '08:00',
-      mondayEnd: '16:00',
-      tuesdayStart: '08:00',
-      tuesdayEnd: '16:00',
-      wednesdayStart: '08:00',
-      wednesdayEnd: '16:00',
-      thursdayStart: '08:00',
-      thursdayEnd: '16:00',
-      fridayStart: '08:00',
-      fridayEnd: '16:00'
-    },
-    status: 'active',
-    bio: 'Dedicated to providing compassionate pediatric care',
-    yearsOfExperience: 10,
-    department: 'Pediatrics',
-    boardCertifications: ['American Board of Pediatrics'],
-    createdAt: '2024-03-05T08:00:00Z',
-    updatedAt: '2024-11-25T12:00:00Z'
+    education: 'MD from Johns Hopkins University',
+    languages: 'English, Spanish',
+    specializations: [{ id: 'spec-1', name: 'Cardiology' }],
+    created_at: '2024-01-15T08:00:00Z',
+    updated_at: '2024-11-25T12:00:00Z'
   }
 ];
 
@@ -197,11 +130,7 @@ export async function getDoctors(options?: {
     let filtered = [...mockDoctors];
 
     if (options?.specialty) {
-      filtered = filtered.filter(d => d.specialty === options.specialty);
-    }
-
-    if (options?.status) {
-      filtered = filtered.filter(d => d.status === options.status);
+      filtered = filtered.filter(d => d.specializations?.some(s => s.name.toLowerCase() === options.specialty?.toLowerCase()));
     }
 
     return {
@@ -255,25 +184,16 @@ export async function createDoctor(
     if (error instanceof ApiError && error.status === 404) {
       const newDoctor: Doctor = {
         id: `doc-${Date.now()}`,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        email: payload.email,
-        phone: payload.phone,
-        specialty: payload.specialty,
-        credentials: {
-          licenseNumber: payload.licenseNumber,
-          licenseState: payload.licenseState,
-          deaNumber: payload.deaNumber,
-          npiNumber: payload.npiNumber,
-          boardCertifications: payload.boardCertifications
-        },
-        availability: payload.availability || {},
+        full_name: payload.full_name,
+        license_number: payload.licenseNumber,
+        dea_number: payload.deaNumber,
+        npi_number: payload.npiNumber,
+        specializations: payload.specialty ? [{ id: `spec-${Date.now()}`, name: payload.specialty }] : undefined,
         status: payload.status,
         bio: payload.bio,
-        yearsOfExperience: payload.yearsOfExperience,
-        department: payload.department,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        years_of_experience: payload.yearsOfExperience,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       };
       mockDoctors.push(newDoctor);
       return newDoctor;
@@ -316,7 +236,7 @@ export async function updateDoctor(
       mockDoctors[index] = {
         ...mockDoctors[index],
         ...payload,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       } as Doctor;
       return mockDoctors[index];
     }
@@ -363,4 +283,4 @@ export function getStatuses(): DoctorStatus[] {
 
 // Alias for compatibility
 export const fetchDoctors = getDoctors;
-export const DoctorListResponse = DoctorsResponse;
+export type DoctorListResponse = DoctorsResponse;

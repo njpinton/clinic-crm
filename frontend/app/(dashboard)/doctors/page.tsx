@@ -42,17 +42,18 @@ export default function DoctorsPage() {
     return doctors.filter(doctor => {
       const matchesSearch =
         searchTerm === '' ||
-        `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        doctor.email.toLowerCase().includes(searchTerm.toLowerCase());
+        doctor.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (doctor.user_details?.email || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesSpecialty = specialtyFilter === '' || doctor.specialty === specialtyFilter;
+      const specialty = doctor.specializations?.[0]?.name || '';
+      const matchesSpecialty = specialtyFilter === '' || specialty === specialtyFilter;
 
       return matchesSearch && matchesSpecialty;
     });
   }, [doctors, searchTerm, specialtyFilter]);
 
   const specialties = useMemo(() => {
-    return [...new Set(doctors.map(d => d.specialty))].sort();
+    return [...new Set(doctors.map(d => d.specializations?.[0]?.name).filter(Boolean))].sort();
   }, [doctors]);
 
   const activeCount = useMemo(() => {
@@ -70,7 +71,7 @@ export default function DoctorsPage() {
   };
 
   const handleDeleteClick = async (doctor: Doctor) => {
-    if (!confirm(`Are you sure you want to delete Dr. ${doctor.firstName} ${doctor.lastName}?`)) {
+    if (!confirm(`Are you sure you want to delete ${doctor.full_name}?`)) {
       return;
     }
 
@@ -194,14 +195,14 @@ export default function DoctorsPage() {
                       {filteredDoctors.map((doctor) => (
                         <tr key={doctor.id} className="border-b border-gray-200 hover:bg-gray-50">
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                            Dr. {doctor.firstName} {doctor.lastName}
+                            {doctor.full_name}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.specialty}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.email}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.credentials.licenseNumber}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.specializations?.[0]?.name || 'N/A'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.user_details?.email || 'N/A'}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{doctor.license_number}</td>
                           <td className="px-6 py-4 text-sm">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(doctor.status)}`}>
-                              {doctor.status.charAt(0).toUpperCase() + doctor.status.slice(1).replace('-', ' ')}
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeColor(doctor.status || 'active')}`}>
+                              {(doctor.status || 'active').charAt(0).toUpperCase() + (doctor.status || 'active').slice(1).replace('-', ' ')}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-right">

@@ -79,7 +79,7 @@ export default function PrescriptionForm({
       newErrors.quantity = 'Quantity must be greater than 0';
     }
 
-    if (formData.refills < 0) {
+    if (formData.refills !== undefined && formData.refills < 0) {
       newErrors.refills = 'Refills cannot be negative';
     }
 

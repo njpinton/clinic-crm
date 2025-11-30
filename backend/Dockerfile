@@ -25,14 +25,12 @@ RUN pip install --upgrade pip && \
 # Copy project
 COPY . .
 
-# Collect static files
-# Set temporary ALLOWED_HOSTS for build
+# Set DJANGO_SETTINGS_MODULE for build
 ENV ALLOWED_HOSTS=localhost,127.0.0.1 \
     DJANGO_SETTINGS_MODULE=config.settings.production
-RUN python manage.py collectstatic --noinput
 
 # Expose port
 EXPOSE 8000
 
 # Run gunicorn - listen on PORT environment variable (default 8000)
-CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3"]
+CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120"]
