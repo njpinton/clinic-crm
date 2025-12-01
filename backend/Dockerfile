@@ -1,4 +1,5 @@
 # Backend Dockerfile for Django
+# Force rebuild: 2025-12-01 08:25:00 UTC
 FROM python:3.12-slim
 
 # Set environment variables
