@@ -185,32 +185,39 @@ class ClinicalNoteViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='by-patient')
     def by_patient(self, request):
         """Get all clinical notes for a specific patient."""
-        patient_id = request.query_params.get('patient_id')
+        try:
+            patient_id = request.query_params.get('patient_id')
 
-        if not patient_id:
-            return Response(
-                {'detail': 'patient_id parameter is required.'},
-                status=status.HTTP_400_BAD_REQUEST
+            if not patient_id:
+                return Response(
+                    {'detail': 'patient_id parameter is required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            notes = self.get_queryset().filter(patient_id=patient_id)
+
+            # Log PHI access
+            log_phi_access(
+                user=request.user,
+                action='LIST',
+                resource_type='ClinicalNote',
+                request=request,
+                details=f"Listed {notes.count()} clinical notes for patient {patient_id}"
             )
 
-        notes = self.get_queryset().filter(patient_id=patient_id)
+            page = self.paginate_queryset(notes)
+            if page is not None:
+                serializer = ClinicalNoteListSerializer(page, many=True)
+                return self.get_paginated_response(serializer.data)
 
-        # Log PHI access
-        log_phi_access(
-            user=request.user,
-            action='LIST',
-            resource_type='ClinicalNote',
-            request=request,
-            details=f"Listed {notes.count()} clinical notes for patient {patient_id}"
-        )
-
-        page = self.paginate_queryset(notes)
-        if page is not None:
-            serializer = ClinicalNoteListSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = ClinicalNoteListSerializer(notes, many=True)
-        return Response(serializer.data)
+            serializer = ClinicalNoteListSerializer(notes, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': f'Error retrieving clinical notes: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='by-doctor')
     def by_doctor(self, request):

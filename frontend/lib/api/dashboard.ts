@@ -129,7 +129,7 @@ export async function getUpcomingAppointments(): Promise<DashboardAppointment[]>
   try {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
 
-    const response = await fetch(`${API_BASE_URL}/api/dashboard/appointments/upcoming/`, {
+    const response = await fetch(`${API_BASE_URL}/api/appointments/upcoming/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

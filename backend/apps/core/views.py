@@ -1,11 +1,15 @@
 """
-API views for core app functionality, including audit logs.
+API views for core app functionality, including audit logs and dashboard.
 """
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
+from django.utils import timezone
+from datetime import timedelta
 from apps.core.models import AuditLog
 from apps.core.serializers import AuditLogSerializer
 
@@ -61,3 +65,74 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Regular users can only view their own audit logs
         return queryset.filter(user=user)
+
+
+class DashboardViewSet(viewsets.ViewSet):
+    """
+    ViewSet for dashboard statistics and recent activities.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get dashboard statistics."""
+        try:
+            from apps.patients.models import Patient
+            from apps.appointments.models import Appointment
+            from apps.clinical_notes.models import ClinicalNote
+
+            today = timezone.now().date()
+
+            # Get total patients
+            total_patients = Patient.objects.count()
+
+            # Get appointments today
+            appointments_today = Appointment.objects.filter(
+                appointment_datetime__date=today
+            ).count()
+
+            # Get pending lab orders (placeholder - would need lab app)
+            pending_lab_orders = 0
+
+            # Get active clinical notes (notes created today or recently updated)
+            active_notes = ClinicalNote.objects.filter(
+                created_at__date=today
+            ).count()
+
+            return Response({
+                'totalPatients': total_patients,
+                'appointmentsToday': appointments_today,
+                'pendingLabOrders': pending_lab_orders,
+                'activeNotes': active_notes,
+            })
+        except Exception as e:
+            return Response(
+                {'detail': f'Error retrieving dashboard stats: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'])
+    def activities(self, request):
+        """Get recent system activities from audit logs."""
+        try:
+            # Get recent audit logs (last 10)
+            recent_logs = AuditLog.objects.select_related('user').order_by(
+                '-created_at'
+            )[:10]
+
+            activities = []
+            for log in recent_logs:
+                activities.append({
+                    'id': str(log.id),
+                    'user': f"{log.user.first_name} {log.user.last_name}".strip() or log.user.email,
+                    'action': log.action.lower(),
+                    'resource': f"{log.resource_type} ({log.resource_id[:8]})" if log.resource_id else log.resource_type,
+                    'timestamp': log.created_at.isoformat(),
+                })
+
+            return Response(activities)
+        except Exception as e:
+            return Response(
+                {'detail': f'Error retrieving activities: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
