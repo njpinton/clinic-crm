@@ -38,6 +38,20 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
+# Override database configuration for Cloud SQL public access
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'clinic',
+        'USER': 'postgres',
+        'PASSWORD': 'ClinicCRM2025!Secure',
+        'HOST': '35.188.144.52',
+        'PORT': '5432',
+        'CONN_MAX_AGE': 600,
+        'CONN_HEALTH_CHECKS': True,
+    }
+}
+
 # Sentry error tracking
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 if SENTRY_DSN:
