@@ -106,14 +106,14 @@ elif DATABASE_URL:
         )
     }
 else:
-    # Fallback to environment variables
+    # Fallback to environment variables - production settings should override this
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'postgres'),
+            'NAME': os.environ.get('DB_NAME', 'clinic'),
             'USER': os.environ.get('DB_USER', 'postgres'),
             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
+            'HOST': os.environ.get('DB_HOST', '35.188.144.52'),
             'PORT': os.environ.get('DB_PORT', '5432'),
         }
     }
