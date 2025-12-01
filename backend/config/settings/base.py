@@ -80,7 +80,24 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
+CLOUD_SQL_SOCKET = os.environ.get('CLOUD_SQL_SOCKET_PATH')
+
+if CLOUD_SQL_SOCKET:
+    # Cloud SQL socket connection (via Cloud SQL Proxy)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'clinic',
+            'USER': 'postgres',
+            'PASSWORD': 'ClinicCRM2025!Secure',
+            'HOST': '/cloudsql/postgres',
+            'PORT': '',
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
+elif DATABASE_URL:
+    # TCP connection (for local development or external databases)
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -89,6 +106,7 @@ if DATABASE_URL:
         )
     }
 else:
+    # Fallback to environment variables
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

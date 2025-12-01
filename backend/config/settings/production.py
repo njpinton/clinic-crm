@@ -1,7 +1,12 @@
 """
 Django production settings.
 """
+import os
+import dj_database_url
+
+# Import all base settings first
 from .base import *
+
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -38,7 +43,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Override database configuration for Cloud SQL public access
+# Override database configuration for production
+# This ensures we use the correct database even if environment variables suggest otherwise
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
