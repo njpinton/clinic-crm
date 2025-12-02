@@ -6,9 +6,11 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { getClinicalNotes, ClinicalNotesList, getNoteTypeColor } from '@/lib/api/clinical-notes';
 
 export default function ClinicalNotesPage() {
+  const { accessToken } = useAuth();
   const [notes, setNotes] = useState<ClinicalNotesList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export default function ClinicalNotesPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await getClinicalNotes();
+        const response = await getClinicalNotes({ token: accessToken || undefined });
         setNotes(response.results);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load clinical notes';
@@ -31,8 +33,10 @@ export default function ClinicalNotesPage() {
       }
     };
 
-    loadNotes();
-  }, []);
+    if (accessToken) {
+      loadNotes();
+    }
+  }, [accessToken]);
 
   // Filter notes
   const filteredNotes = useMemo(() => {

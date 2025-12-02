@@ -2,6 +2,7 @@
 Views for Clinical Notes API.
 Handles CRUD operations for clinical notes with proper permissions and audit logging.
 """
+import sentry_sdk
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
