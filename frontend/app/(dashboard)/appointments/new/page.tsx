@@ -3,27 +3,30 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchPatients } from '@/lib/api/patients';
 import { getDoctors, Doctor } from '@/lib/api/doctors';
 import { createAppointment, AppointmentCreatePayload, AppointmentType } from '@/lib/api/appointments';
 import { Patient } from '@/types/patient';
+import { PatientSearch } from '@/components/appointments/PatientSearch';
+import { QuickCreatePatientModal } from '@/components/appointments/QuickCreatePatientModal';
 
 export default function NewAppointmentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { accessToken } = useAuth();
-  
-  const [patients, setPatients] = useState<Patient[]>([]);
+
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreatePatientModal, setShowCreatePatientModal] = useState(false);
 
   // Pre-fill patient_id from URL if available
   const initialPatientId = searchParams.get('patient_id') || '';
 
   // Form State
-  const [selectedPatient, setSelectedPatient] = useState(initialPatientId);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+    initialPatientId ? { id: initialPatientId } as Patient : null
+  );
   const [selectedDoctor, setSelectedDoctor] = useState('');
   const [dateTime, setDateTime] = useState('');
   const [type, setType] = useState<AppointmentType>('consultation');
@@ -36,16 +39,11 @@ export default function NewAppointmentPage() {
 
       try {
         setIsLoading(true);
-        const [patientsData, doctorsData] = await Promise.all([
-          fetchPatients({ token: accessToken }),
-          getDoctors({ token: accessToken })
-        ]);
-
-        setPatients(patientsData.results || []);
+        const doctorsData = await getDoctors({ token: accessToken });
         setDoctors(doctorsData.results || []);
       } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Failed to load patients or doctors list. Please try again.');
+        console.error('Error loading doctors:', err);
+        setError('Failed to load doctors list. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -58,7 +56,7 @@ export default function NewAppointmentPage() {
     e.preventDefault();
     if (!accessToken) return;
 
-    if (!selectedPatient || !selectedDoctor || !dateTime) {
+    if (!selectedPatient?.id || !selectedDoctor || !dateTime) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -68,7 +66,7 @@ export default function NewAppointmentPage() {
       setError(null);
 
       const payload: AppointmentCreatePayload = {
-        patientId: selectedPatient,
+        patientId: selectedPatient.id,
         doctorId: selectedDoctor,
         dateTime: new Date(dateTime).toISOString(),
         type: type,
@@ -85,6 +83,11 @@ export default function NewAppointmentPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePatientCreated = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowCreatePatientModal(false);
   };
 
   if (isLoading) {
@@ -111,21 +114,22 @@ export default function NewAppointmentPage() {
       <div className="bg-white shadow rounded-lg p-6 border border-gray-200">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="patient" className="block text-sm font-medium text-gray-700">Patient <span className="text-red-500">*</span></label>
-            <select
-              id="patient"
-              value={selectedPatient}
-              onChange={(e) => setSelectedPatient(e.target.value)}
-              required
-              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md border"
-            >
-              <option value="">Select a patient...</option>
-              {patients.map((patient) => (
-                <option key={patient.id} value={patient.id}>
-                  {patient.full_name || `${patient.first_name} ${patient.last_name}`} (MRN: {patient.medical_record_number})
-                </option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Patient <span className="text-red-500">*</span>
+            </label>
+            <PatientSearch
+              token={accessToken || ''}
+              onPatientSelected={setSelectedPatient}
+              onCreateNewClick={() => setShowCreatePatientModal(true)}
+              disabled={!accessToken}
+            />
+            {selectedPatient && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <p className="text-sm text-blue-900">
+                  Selected: <strong>{selectedPatient.first_name} {selectedPatient.last_name}</strong> (MRN: {selectedPatient.medical_record_number})
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -222,6 +226,14 @@ export default function NewAppointmentPage() {
           </div>
         </form>
       </div>
+
+      {/* Quick Create Patient Modal */}
+      <QuickCreatePatientModal
+        isOpen={showCreatePatientModal}
+        token={accessToken || ''}
+        onClose={() => setShowCreatePatientModal(false)}
+        onPatientCreated={handlePatientCreated}
+      />
     </div>
   );
 }

@@ -197,6 +197,83 @@ export async function searchPatients(query: string): Promise<PatientsResponse> {
 }
 
 /**
+ * Search patients with autocomplete endpoint
+ * Used for real-time search during patient selection
+ */
+export async function searchPatientsAutocomplete(query: string, token?: string): Promise<PatientsResponse> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(
+    `${API_URL}/api/patients/search/?q=${encodeURIComponent(query)}`,
+    {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+      cache: 'no-store',
+    }
+  );
+
+  return handleResponse<PatientsResponse>(response);
+}
+
+/**
+ * Check for potential duplicate patients
+ * Used during patient creation to prevent accidental duplicates
+ */
+export interface DuplicateCheckRequest {
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  phone?: string;
+  email?: string;
+}
+
+export interface DuplicateCheckResult {
+  id: string;
+  full_name: string;
+  date_of_birth: string;
+  medical_record_number: string;
+  phone: string;
+  email: string;
+  match_type: 'exact_name_dob' | 'phone_match' | 'email_match';
+  confidence: number;
+}
+
+export interface DuplicateCheckResponse {
+  duplicates_found: boolean;
+  potential_duplicates: DuplicateCheckResult[];
+  count: number;
+}
+
+export async function checkDuplicatePatient(
+  data: DuplicateCheckRequest,
+  token?: string
+): Promise<DuplicateCheckResponse> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}/api/patients/check_duplicate/`, {
+    method: 'POST',
+    headers,
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+
+  return handleResponse<DuplicateCheckResponse>(response);
+}
+
+/**
  * Filter patients by gender
  * Convenience wrapper around fetchPatients
  */

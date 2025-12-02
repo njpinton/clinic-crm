@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 import sentry_sdk
 
 from .models import Patient
@@ -328,5 +329,140 @@ class PatientViewSet(viewsets.ModelViewSet):
             sentry_sdk.capture_exception(e)
             return Response(
                 {'error': 'Failed to search patients'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def check_duplicate(self, request):
+        """
+        Check if a patient might be a duplicate based on provided information.
+
+        Used during patient registration to prevent accidental duplicate entries.
+        Returns potential duplicates based on:
+        - Full name + date of birth
+        - Phone number
+        - Email address
+        - Medical record number
+
+        Request body:
+        {
+            "first_name": "John",
+            "last_name": "Doe",
+            "date_of_birth": "1990-01-15",
+            "phone": "09123456789",
+            "email": "john@example.com"
+        }
+        """
+        from datetime import datetime
+
+        try:
+            first_name = request.data.get('first_name', '').strip()
+            last_name = request.data.get('last_name', '').strip()
+            date_of_birth = request.data.get('date_of_birth', '').strip()
+            phone = request.data.get('phone', '').strip()
+            email = request.data.get('email', '').strip()
+
+            if not (first_name and last_name and date_of_birth):
+                return Response(
+                    {'error': 'first_name, last_name, and date_of_birth are required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Start with queryset
+            queryset = self.get_queryset()
+            potential_duplicates = []
+
+            # Check 1: Exact match on name + DOB (strongest match)
+            try:
+                dob_date = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+                exact_matches = queryset.filter(
+                    first_name__iexact=first_name,
+                    last_name__iexact=last_name,
+                    date_of_birth=dob_date
+                )
+
+                if exact_matches.exists():
+                    potential_duplicates.extend([
+                        {
+                            'id': str(p.id),
+                            'full_name': p.full_name,
+                            'date_of_birth': p.date_of_birth.isoformat(),
+                            'medical_record_number': p.medical_record_number,
+                            'phone': p.phone,
+                            'email': p.email,
+                            'match_type': 'exact_name_dob',
+                            'confidence': 95
+                        }
+                        for p in exact_matches[:5]
+                    ])
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid date format. Use YYYY-MM-DD'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Check 2: Phone number match (if provided)
+            if phone:
+                phone_clean = phone.replace('+', '').replace('-', '').replace(' ', '').replace('(', '').replace(')', '')
+                phone_matches = queryset.filter(phone__icontains=phone_clean).exclude(
+                    id__in=[d['id'] for d in potential_duplicates]
+                )
+
+                if phone_matches.exists():
+                    potential_duplicates.extend([
+                        {
+                            'id': str(p.id),
+                            'full_name': p.full_name,
+                            'date_of_birth': p.date_of_birth.isoformat(),
+                            'medical_record_number': p.medical_record_number,
+                            'phone': p.phone,
+                            'email': p.email,
+                            'match_type': 'phone_match',
+                            'confidence': 80
+                        }
+                        for p in phone_matches[:5]
+                    ])
+
+            # Check 3: Email match (if provided)
+            if email:
+                email_matches = queryset.filter(email__iexact=email).exclude(
+                    id__in=[d['id'] for d in potential_duplicates]
+                )
+
+                if email_matches.exists():
+                    potential_duplicates.extend([
+                        {
+                            'id': str(p.id),
+                            'full_name': p.full_name,
+                            'date_of_birth': p.date_of_birth.isoformat(),
+                            'medical_record_number': p.medical_record_number,
+                            'phone': p.phone,
+                            'email': p.email,
+                            'match_type': 'email_match',
+                            'confidence': 85
+                        }
+                        for p in email_matches[:5]
+                    ])
+
+            # Log the duplicate check
+            log_phi_access(
+                user=request.user,
+                action='READ',
+                resource_type='Patient',
+                resource_id=None,
+                request=request,
+                details=f'Duplicate check: {first_name} {last_name} ({date_of_birth}), found {len(potential_duplicates)} matches'
+            )
+
+            return Response({
+                'duplicates_found': len(potential_duplicates) > 0,
+                'potential_duplicates': potential_duplicates,
+                'count': len(potential_duplicates)
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'error': 'Failed to check for duplicates'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
