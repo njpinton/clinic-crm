@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 created_count = 0
                 for region_data in regions:
                     region, created = PSGCRegion.objects.update_or_create(
-                        psgc_id=region_data['code'],
+                        psgc_id=region_data['psgc_id'],
                         defaults={
                             'name': region_data['name'],
                             'correspondence_code': region_data.get('correspondence_code', ''),
@@ -86,7 +86,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     for prov_data in provinces:
                         province, created = PSGCProvince.objects.update_or_create(
-                            psgc_id=prov_data['code'],
+                            psgc_id=prov_data['psgc_id'],
                             defaults={
                                 'name': prov_data['name'],
                                 'region': region,
@@ -121,7 +121,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     for mun_data in municipalities:
                         municipality, created = PSGCMunicipality.objects.update_or_create(
-                            psgc_id=mun_data['code'],
+                            psgc_id=mun_data['psgc_id'],
                             defaults={
                                 'name': mun_data['name'],
                                 'province': province,
@@ -159,7 +159,7 @@ class Command(BaseCommand):
                 with transaction.atomic():
                     for bar_data in barangays:
                         barangay, created = PSGCBarangay.objects.update_or_create(
-                            psgc_id=bar_data['code'],
+                            psgc_id=bar_data['psgc_id'],
                             defaults={
                                 'name': bar_data['name'],
                                 'municipality': municipality,
