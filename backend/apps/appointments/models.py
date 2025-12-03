@@ -5,6 +5,7 @@ Manages appointment scheduling, reminders, and cancellations.
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from datetime import time
 from apps.core.models import UUIDModel, TimeStampedModel, SoftDeleteModel
 
 
@@ -217,6 +218,111 @@ class Appointment(UUIDModel, TimeStampedModel, SoftDeleteModel):
         self.status = 'completed'
         self.checked_out_at = timezone.now()
         self.save(update_fields=['status', 'checked_out_at'])
+
+
+class DoctorSchedule(UUIDModel, TimeStampedModel):
+    """
+    Doctor working schedule for availability checking.
+    Defines when doctors are available for appointments.
+    """
+    DAY_CHOICES = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    ]
+
+    doctor = models.ForeignKey(
+        'doctors.Doctor',
+        on_delete=models.CASCADE,
+        related_name='schedules',
+        help_text="Doctor this schedule belongs to"
+    )
+
+    # Day of week (0 = Monday, 6 = Sunday)
+    day_of_week = models.IntegerField(
+        choices=DAY_CHOICES,
+        help_text="Day of the week"
+    )
+
+    # Start and end times
+    start_time = models.TimeField(
+        help_text="Schedule start time (e.g., 08:00)"
+    )
+    end_time = models.TimeField(
+        help_text="Schedule end time (e.g., 17:00)"
+    )
+
+    # Break times (optional)
+    break_start = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Lunch break start time"
+    )
+    break_end = models.TimeField(
+        null=True,
+        blank=True,
+        help_text="Lunch break end time"
+    )
+
+    # Availability flag
+    is_available = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="Whether doctor is available on this day"
+    )
+
+    class Meta:
+        ordering = ['day_of_week', 'start_time']
+        unique_together = [['doctor', 'day_of_week']]
+        indexes = [
+            models.Index(fields=['doctor', 'day_of_week']),
+            models.Index(fields=['is_available']),
+        ]
+        verbose_name = 'Doctor Schedule'
+        verbose_name_plural = 'Doctor Schedules'
+
+    def __str__(self):
+        day_name = self.get_day_of_week_display()
+        return f"{self.doctor.full_name} - {day_name} ({self.start_time} - {self.end_time})"
+
+    def clean(self):
+        """Validate schedule times."""
+        super().clean()
+
+        # Start time must be before end time
+        if self.start_time >= self.end_time:
+            raise ValidationError({
+                'end_time': "End time must be after start time."
+            })
+
+        # If break times are set, validate them
+        if self.break_start and self.break_end:
+            if self.break_start >= self.break_end:
+                raise ValidationError({
+                    'break_end': "Break end time must be after break start time."
+                })
+
+            # Break times must be within working hours
+            if self.break_start < self.start_time or self.break_end > self.end_time:
+                raise ValidationError({
+                    'break_start': "Break times must be within working hours."
+                })
+
+    def has_time_slot(self, check_time):
+        """Check if a specific time falls within this schedule (accounting for breaks)."""
+        if check_time < self.start_time or check_time >= self.end_time:
+            return False
+
+        # Check if time falls within break period
+        if self.break_start and self.break_end:
+            if self.break_start <= check_time < self.break_end:
+                return False
+
+        return True
 
 
 class AppointmentReminder(UUIDModel, TimeStampedModel):

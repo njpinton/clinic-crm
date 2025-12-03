@@ -6,9 +6,80 @@ from rest_framework import serializers
 from django.utils import timezone
 from django.core.exceptions import ValidationError as DjangoValidationError
 
-from .models import Appointment, AppointmentReminder
+from .models import Appointment, AppointmentReminder, DoctorSchedule
 from apps.patients.models import Patient
 from apps.doctors.models import Doctor
+
+
+class DoctorScheduleSerializer(serializers.ModelSerializer):
+    """
+    Serializer for doctor schedules.
+    Used for availability checking and schedule management.
+    """
+    day_of_week_display = serializers.CharField(source='get_day_of_week_display', read_only=True)
+    doctor_name = serializers.CharField(source='doctor.full_name', read_only=True)
+
+    class Meta:
+        model = DoctorSchedule
+        fields = [
+            'id',
+            'doctor',
+            'doctor_name',
+            'day_of_week',
+            'day_of_week_display',
+            'start_time',
+            'end_time',
+            'break_start',
+            'break_end',
+            'is_available',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = [
+            'id',
+            'doctor_name',
+            'day_of_week_display',
+            'created_at',
+            'updated_at',
+        ]
+
+    def validate_start_time(self, value):
+        """Validate start time is reasonable."""
+        # Start time should be between 5 AM and 8 PM
+        from datetime import time
+        if value < time(5, 0) or value > time(20, 0):
+            raise serializers.ValidationError(
+                "Start time should be between 05:00 and 20:00"
+            )
+        return value
+
+    def validate_end_time(self, value):
+        """Validate end time is reasonable."""
+        from datetime import time
+        if value < time(6, 0) or value > time(23, 0):
+            raise serializers.ValidationError(
+                "End time should be between 06:00 and 23:00"
+            )
+        return value
+
+    def validate(self, attrs):
+        """Validate schedule times."""
+        start_time = attrs.get('start_time')
+        end_time = attrs.get('end_time')
+        break_start = attrs.get('break_start')
+        break_end = attrs.get('break_end')
+
+        if start_time and end_time and start_time >= end_time:
+            raise serializers.ValidationError({
+                'end_time': "End time must be after start time."
+            })
+
+        if break_start and break_end and break_start >= break_end:
+            raise serializers.ValidationError({
+                'break_end': "Break end time must be after break start time."
+            })
+
+        return attrs
 
 
 class AppointmentReminderSerializer(serializers.ModelSerializer):
