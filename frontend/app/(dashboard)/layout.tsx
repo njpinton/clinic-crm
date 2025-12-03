@@ -225,6 +225,11 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <div className="lg:pl-64">
+        {/* Desktop header */}
+        <div className="hidden lg:flex items-center justify-end bg-white border-b border-gray-200 px-6 py-4 h-16">
+          <UserMenu />
+        </div>
+
         <main className="min-h-screen">{children}</main>
       </div>
     </div>
