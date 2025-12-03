@@ -705,6 +705,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
         Example: /api/appointments/availability/?doctor_id=<uuid>&date=2025-12-25&duration_minutes=30
         """
+        from datetime import datetime as dt
+
         try:
             doctor_id = request.query_params.get('doctor_id')
             date_str = request.query_params.get('date')
@@ -717,9 +719,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 )
 
             # Parse date
-            from datetime import datetime
             try:
-                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                date = dt.strptime(date_str, '%Y-%m-%d').date()
             except ValueError:
                 return Response(
                     {'detail': 'date must be in YYYY-MM-DD format.'},
@@ -776,7 +777,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             return Response(
-                {'detail': 'Error retrieving available slots.'},
+                {'detail': f'Error retrieving available slots: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -798,6 +799,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             "conflicting_appointments": [...]
         }
         """
+        from django.utils.dateparse import parse_datetime
+
         try:
             doctor_id = request.data.get('doctor_id')
             appointment_datetime_str = request.data.get('appointment_datetime')
@@ -810,10 +813,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Parse datetime
-            from dateutil.parser import isoparse
+            # Parse datetime using Django's utility
             try:
-                appointment_datetime = isoparse(appointment_datetime_str)
+                appointment_datetime = parse_datetime(appointment_datetime_str)
+                if appointment_datetime is None:
+                    # Try parsing with microseconds or other ISO formats
+                    raise ValueError("Could not parse datetime")
             except (ValueError, TypeError):
                 return Response(
                     {'detail': 'appointment_datetime must be in ISO format.'},
@@ -881,7 +886,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         except Exception as e:
             sentry_sdk.capture_exception(e)
             return Response(
-                {'detail': 'Error checking for conflicts.'},
+                {'detail': f'Error checking for conflicts: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
