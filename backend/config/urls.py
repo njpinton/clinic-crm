@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/', include('apps.insurance.urls')),
     path('api/', include('apps.laboratory.urls')),
     path('api/billing/', include('apps.billing.urls')),
+    path('api/psgc/', include('apps.locations.urls')),
 ]

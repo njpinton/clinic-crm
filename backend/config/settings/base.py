@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'apps.prescriptions',
     'apps.insurance',
     'apps.billing',
+    'apps.locations',  # PSGC geographic data
 ]
 
 # Custom User Model
