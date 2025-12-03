@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -15,7 +16,8 @@ interface LocationSettings {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const { accessToken, user } = useAuth();
+  const { accessToken, user, logout } = useAuth();
+  const router = useRouter();
   const [settings, setSettings] = useState<LocationSettings>({
     city: '',
     province: '',
@@ -189,20 +191,32 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <div className="space-y-2 pt-4 border-t border-gray-200">
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={onClose}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  logout();
+                  onClose();
+                }}
+                className="w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Saving...' : 'Save Changes'}
+                Logout
               </button>
             </div>
           </form>
