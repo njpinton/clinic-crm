@@ -28,7 +28,9 @@ from .permissions import (
     CanCompleteAppointment,
     CanManageReminders,
 )
+from .services import AppointmentAvailabilityService, AppointmentValidationService
 from apps.core.audit import log_phi_access
+from apps.doctors.models import Doctor
 
 
 class AppointmentViewSet(viewsets.ModelViewSet):
@@ -686,6 +688,200 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             sentry_sdk.capture_exception(e)
             return Response(
                 {'detail': 'Error reordering queue.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def availability(self, request):
+        """
+        Get available appointment slots for a specific doctor on a given date.
+
+        Query parameters:
+        - doctor_id (required): UUID of the doctor
+        - date (required): Date in YYYY-MM-DD format
+        - duration_minutes (optional): Appointment duration in minutes (default: 30)
+        - start_hour (optional): Start working hour (default: 9)
+        - end_hour (optional): End working hour (default: 17)
+
+        Example: /api/appointments/availability/?doctor_id=<uuid>&date=2025-12-25&duration_minutes=30
+        """
+        try:
+            doctor_id = request.query_params.get('doctor_id')
+            date_str = request.query_params.get('date')
+
+            # Validate required parameters
+            if not doctor_id or not date_str:
+                return Response(
+                    {'detail': 'doctor_id and date parameters are required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Parse date
+            from datetime import datetime
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response(
+                    {'detail': 'date must be in YYYY-MM-DD format.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get optional parameters
+            try:
+                duration_minutes = int(request.query_params.get('duration_minutes', 30))
+                start_hour = int(request.query_params.get('start_hour', 9))
+                end_hour = int(request.query_params.get('end_hour', 17))
+            except ValueError:
+                return Response(
+                    {'detail': 'duration_minutes, start_hour, and end_hour must be integers.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get doctor
+            try:
+                doctor = Doctor.objects.get(id=doctor_id)
+            except Doctor.DoesNotExist:
+                return Response(
+                    {'detail': 'Doctor not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Get available slots
+            service = AppointmentAvailabilityService()
+            slots = service.get_available_slots(
+                doctor=doctor,
+                date=date,
+                duration_minutes=duration_minutes,
+                start_hour=start_hour,
+                end_hour=end_hour
+            )
+
+            # Log access
+            log_phi_access(
+                user=request.user,
+                action='READ',
+                resource_type='Appointment',
+                request=request,
+                details=f'Checked availability for doctor {doctor_id} on {date}'
+            )
+
+            return Response({
+                'doctor_id': str(doctor_id),
+                'date': date_str,
+                'duration_minutes': duration_minutes,
+                'slots': [slot.isoformat() for slot in slots],
+                'slots_count': len(slots)
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error retrieving available slots.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def check_conflict(self, request):
+        """
+        Check if a proposed appointment time conflicts with existing appointments.
+
+        Request body:
+        {
+            "doctor_id": "uuid",
+            "appointment_datetime": "2025-12-25T10:00:00Z",
+            "duration_minutes": 30
+        }
+
+        Returns:
+        {
+            "has_conflict": boolean,
+            "conflicting_appointments": [...]
+        }
+        """
+        try:
+            doctor_id = request.data.get('doctor_id')
+            appointment_datetime_str = request.data.get('appointment_datetime')
+            duration_minutes = request.data.get('duration_minutes', 30)
+
+            # Validate required parameters
+            if not doctor_id or not appointment_datetime_str:
+                return Response(
+                    {'detail': 'doctor_id and appointment_datetime are required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Parse datetime
+            from dateutil.parser import isoparse
+            try:
+                appointment_datetime = isoparse(appointment_datetime_str)
+            except (ValueError, TypeError):
+                return Response(
+                    {'detail': 'appointment_datetime must be in ISO format.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate duration
+            try:
+                duration_minutes = int(duration_minutes)
+            except ValueError:
+                return Response(
+                    {'detail': 'duration_minutes must be an integer.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Get doctor
+            try:
+                doctor = Doctor.objects.get(id=doctor_id)
+            except Doctor.DoesNotExist:
+                return Response(
+                    {'detail': 'Doctor not found.'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Check for conflicts
+            service = AppointmentAvailabilityService()
+            has_conflict = service.has_conflict(
+                doctor=doctor,
+                appointment_datetime=appointment_datetime,
+                duration_minutes=duration_minutes
+            )
+
+            # Get conflicting appointments if any
+            conflicting = []
+            if has_conflict:
+                conflicting_appts = service.get_conflicting_appointments(
+                    doctor=doctor,
+                    appointment_datetime=appointment_datetime,
+                    duration_minutes=duration_minutes
+                )
+                conflicting = [
+                    {
+                        'id': str(appt.id),
+                        'patient': appt.patient.full_name,
+                        'appointment_datetime': appt.appointment_datetime.isoformat(),
+                        'duration_minutes': appt.duration_minutes
+                    }
+                    for appt in conflicting_appts
+                ]
+
+            # Log access
+            log_phi_access(
+                user=request.user,
+                action='READ',
+                resource_type='Appointment',
+                request=request,
+                details=f'Checked conflict for doctor {doctor_id} at {appointment_datetime_str}'
+            )
+
+            return Response({
+                'has_conflict': has_conflict,
+                'conflicting_appointments': conflicting
+            })
+
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error checking for conflicts.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
