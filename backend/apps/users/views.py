@@ -339,6 +339,37 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=False, methods=['patch', 'put'], permission_classes=[IsAuthenticated])
+    def update_me(self, request):
+        """Update current user's profile (location and personal information)."""
+        try:
+            serializer = UserUpdateSerializer(
+                request.user,
+                data=request.data,
+                partial=True,
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+
+            # HIPAA Audit Logging
+            log_phi_access(
+                user=request.user,
+                action='UPDATE',
+                resource_type='User',
+                resource_id=str(user.id),
+                request=request,
+                details='Updated own profile settings',
+            )
+
+            return Response(UserDetailSerializer(user).data)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error updating profile.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 class UserRegistrationViewSet(viewsets.GenericViewSet):
     """

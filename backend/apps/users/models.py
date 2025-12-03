@@ -87,6 +87,11 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
     date_of_birth = models.DateField(null=True, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
 
+    # Location information
+    city = models.CharField(max_length=100, blank=True, help_text="City or town")
+    province = models.CharField(max_length=100, blank=True, help_text="Province or state")
+    postal_code = models.CharField(max_length=20, blank=True, help_text="Postal or zip code")
+
     # Emergency contact (for staff)
     emergency_contact_name = models.CharField(max_length=200, blank=True)
     emergency_contact_phone = models.CharField(validators=[phone_regex], max_length=17, blank=True)
