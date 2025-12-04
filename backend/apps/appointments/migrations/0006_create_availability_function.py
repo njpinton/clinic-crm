@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('appointments', '0004_add_composite_indexes'),
+        ('appointments', '0005_doctorschedule'),
     ]
 
     operations = [

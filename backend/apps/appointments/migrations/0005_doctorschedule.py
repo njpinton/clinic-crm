@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
         ("doctors", "0002_initial"),
         (
             "appointments",
-            "0003_appointment_is_walk_in_appointment_queue_order_and_more",
+            "0004_add_composite_indexes",
         ),
     ]
 
