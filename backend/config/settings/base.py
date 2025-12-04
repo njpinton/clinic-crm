@@ -91,10 +91,10 @@ if CLOUD_SQL_SOCKET:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'clinic',
-            'USER': 'postgres',
-            'PASSWORD': 'ClinicCRM2025!Secure',
-            'HOST': '/cloudsql/postgres',
+            'NAME': os.environ.get('DB_NAME', 'clinic'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': CLOUD_SQL_SOCKET,
             'PORT': '',
             'CONN_MAX_AGE': 600,
             'CONN_HEALTH_CHECKS': True,
