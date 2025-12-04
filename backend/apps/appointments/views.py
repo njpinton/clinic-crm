@@ -11,6 +11,12 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 import sentry_sdk
 
+from apps.core.resilience import (
+    CircuitBreakerRegistry,
+    RequestTimeoutConfig,
+    with_circuit_breaker
+)
+
 from .models import Appointment, AppointmentReminder, DoctorSchedule
 from .serializers import (
     AppointmentSerializer,
@@ -30,6 +36,7 @@ from .permissions import (
     CanManageReminders,
 )
 from .services import AppointmentAvailabilityService, AppointmentValidationService
+from .cache import AppointmentCacheManager, CacheInvalidationHelper
 from apps.core.audit import log_phi_access
 from apps.doctors.models import Doctor
 
@@ -187,12 +194,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
     def create(self, request, *args, **kwargs):
-        """Create a new appointment with audit logging."""
+        """Create a new appointment with audit logging and cache invalidation."""
         try:
             response = super().create(request, *args, **kwargs)
 
-            # HIPAA Audit Logging
+            # HIPAA Audit Logging and Cache Invalidation
             if response.status_code == status.HTTP_201_CREATED:
+                # Invalidate doctor's schedule cache
+                doctor_id = response.data.get('doctor')
+                if doctor_id:
+                    CacheInvalidationHelper.on_appointment_created(
+                        Appointment.objects.get(id=response.data.get('id'))
+                    )
+
                 log_phi_access(
                     user=request.user,
                     action='CREATE',
@@ -210,13 +224,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
     def update(self, request, *args, **kwargs):
-        """Update an appointment with audit logging."""
+        """Update an appointment with audit logging and cache invalidation."""
         try:
             instance = self.get_object()
             response = super().update(request, *args, **kwargs)
 
-            # HIPAA Audit Logging
+            # HIPAA Audit Logging and Cache Invalidation
             if response.status_code == status.HTTP_200_OK:
+                # Invalidate doctor's schedule cache
+                CacheInvalidationHelper.on_appointment_updated(instance)
+
                 log_phi_access(
                     user=request.user,
                     action='UPDATE',
@@ -234,13 +251,16 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             )
 
     def destroy(self, request, *args, **kwargs):
-        """Soft delete an appointment with audit logging."""
+        """Soft delete an appointment with audit logging and cache invalidation."""
         try:
             instance = self.get_object()
             appointment_info = f'{instance.patient.full_name} with {instance.doctor.full_name} on {instance.appointment_datetime}'
 
             # Soft delete
             instance.delete()
+
+            # Cache Invalidation
+            CacheInvalidationHelper.on_appointment_deleted(instance)
 
             # HIPAA Audit Logging
             log_phi_access(
@@ -696,6 +716,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     def availability(self, request):
         """
         Get available appointment slots for a specific doctor on a given date.
+        Results are cached for 24 hours to reduce database load.
 
         Query parameters:
         - doctor_id (required): UUID of the doctor
@@ -748,15 +769,59 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            # Get available slots
-            service = AppointmentAvailabilityService()
-            slots = service.get_available_slots(
-                doctor=doctor,
-                date=date,
-                duration_minutes=duration_minutes,
-                start_hour=start_hour,
-                end_hour=end_hour
+            # Try to get from cache first (for default parameters)
+            if duration_minutes == 30 and start_hour == 9 and end_hour == 17:
+                cached_slots = AppointmentCacheManager.get_cached_slots(doctor_id, date)
+                if cached_slots is not None:
+                    # Return cached results
+                    log_phi_access(
+                        user=request.user,
+                        action='READ',
+                        resource_type='Appointment',
+                        request=request,
+                        details=f'Checked availability for doctor {doctor_id} on {date} (cached)'
+                    )
+                    return Response({
+                        'doctor_id': str(doctor_id),
+                        'date': date_str,
+                        'duration_minutes': duration_minutes,
+                        'slots': [slot.isoformat() for slot in cached_slots],
+                        'slots_count': len(cached_slots),
+                        'cached': True
+                    })
+
+            # Get available slots with circuit breaker protection
+            # Prevents cascading failures if slot calculation service degrades
+            breaker = CircuitBreakerRegistry.get_or_create(
+                name='appointment_availability',
+                failure_threshold=5,
+                recovery_timeout=60
             )
+
+            try:
+                service = AppointmentAvailabilityService()
+                slots = breaker.call(
+                    service.get_available_slots,
+                    doctor=doctor,
+                    date=date,
+                    duration_minutes=duration_minutes,
+                    start_hour=start_hour,
+                    end_hour=end_hour
+                )
+            except Exception as e:
+                # Circuit breaker is open - return graceful error with retry info
+                sentry_sdk.capture_exception(e)
+                return Response(
+                    {
+                        'detail': 'Appointment availability service is temporarily unavailable. Please try again in a moment.',
+                        'retry_after': RequestTimeoutConfig.TOTAL_REQUEST_TIMEOUT
+                    },
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                )
+
+            # Cache results for default parameters
+            if duration_minutes == 30 and start_hour == 9 and end_hour == 17:
+                AppointmentCacheManager.cache_available_slots(doctor_id, date, slots)
 
             # Log access
             log_phi_access(
@@ -772,7 +837,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 'date': date_str,
                 'duration_minutes': duration_minutes,
                 'slots': [slot.isoformat() for slot in slots],
-                'slots_count': len(slots)
+                'slots_count': len(slots),
+                'cached': False
             })
 
         except Exception as e:
