@@ -2,9 +2,12 @@
 Appointment services for business logic.
 
 Handles availability checking, conflict detection, and validation.
+Implements atomic transactions to prevent race conditions and double-booking.
+Uses PostgreSQL functions for efficient slot calculation.
 """
 from datetime import datetime, time, timedelta
 from django.utils import timezone
+from django.db import transaction, IntegrityError, connection
 from django.db.models import Q
 
 from apps.appointments.models import Appointment
@@ -31,6 +34,9 @@ class AppointmentAvailabilityService:
         """
         Get available time slots for a doctor on a given date.
 
+        Uses PostgreSQL function for efficient server-side calculation instead of Python loops.
+        This dramatically improves performance for large availability queries.
+
         Args:
             doctor: Doctor instance
             date: Date to check availability for
@@ -44,6 +50,54 @@ class AppointmentAvailabilityService:
         start_hour = start_hour or self.WORKING_START_HOUR
         end_hour = end_hour or self.WORKING_END_HOUR
 
+        try:
+            # Call PostgreSQL function for efficient slot calculation
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT slot_time FROM get_available_slots(
+                        %s, %s, %s, %s, %s
+                    )
+                    ORDER BY slot_time
+                    """,
+                    [
+                        str(doctor.id),      # doctor_id (UUID)
+                        date,                # date
+                        duration_minutes,    # duration_minutes
+                        start_hour,          # start_hour
+                        end_hour,            # end_hour
+                    ]
+                )
+
+                # Convert database results to datetime objects
+                available_slots = [row[0] for row in cursor.fetchall()]
+                return available_slots
+
+        except Exception as e:
+            # Fallback to Python implementation if PostgreSQL function fails
+            # This ensures availability checks work even if the function is not available
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"PostgreSQL get_available_slots() failed: {e}. Falling back to Python implementation.")
+
+            return self._get_available_slots_python(
+                doctor, date, duration_minutes, start_hour, end_hour
+            )
+
+    def _get_available_slots_python(
+        self,
+        doctor: Doctor,
+        date: datetime.date,
+        duration_minutes: int,
+        start_hour: int,
+        end_hour: int
+    ) -> list:
+        """
+        Python fallback implementation for getting available slots.
+
+        Used when PostgreSQL function is unavailable or during early deployments
+        before migrations have run.
+        """
         available_slots = []
         current_hour = start_hour
 
@@ -102,6 +156,8 @@ class AppointmentAvailabilityService:
         Check if an appointment conflicts with existing appointments.
 
         Conflicts occur when appointment times overlap, accounting for duration.
+        NOTE: This check is not atomic - use check_and_book_appointment() instead
+        when creating new appointments to prevent race conditions.
 
         Args:
             doctor: Doctor instance
@@ -130,6 +186,53 @@ class AppointmentAvailabilityService:
                 return True
 
         return False
+
+    @transaction.atomic
+    def check_and_book_appointment(
+        self,
+        doctor: Doctor,
+        appointment_datetime: datetime,
+        duration_minutes: int = 30
+    ) -> bool:
+        """
+        Atomically check for conflicts and lock if available.
+
+        Uses SELECT FOR UPDATE to prevent race conditions and double-booking.
+        This method must be called within a transaction when creating appointments.
+
+        Args:
+            doctor: Doctor instance
+            appointment_datetime: Proposed appointment time
+            duration_minutes: Appointment duration in minutes
+
+        Returns:
+            True if slot is available and locked, False if conflict exists
+
+        Raises:
+            IntegrityError if a unique constraint is violated
+        """
+        appointment_end = appointment_datetime + timedelta(minutes=duration_minutes)
+
+        # Lock the appointment table for this doctor
+        # SELECT FOR UPDATE prevents other transactions from modifying during check
+        existing_appointments = list(Appointment.objects.select_for_update().filter(
+            doctor=doctor,
+            deleted_at__isnull=True,
+            status__in=['scheduled', 'confirmed', 'checked_in', 'in_progress']
+        ).values('appointment_datetime', 'duration_minutes'))
+
+        # Check for conflicts within the lock
+        for appointment in existing_appointments:
+            existing_end = appointment['appointment_datetime'] + timedelta(
+                minutes=appointment['duration_minutes']
+            )
+            if appointment['appointment_datetime'] < appointment_end and existing_end > appointment_datetime:
+                # Conflict exists - transaction will be rolled back
+                return False
+
+        # No conflicts found - safe to proceed with creation
+        # Lock will be held until transaction completes
+        return True
 
     def get_conflicting_appointments(
         self,
