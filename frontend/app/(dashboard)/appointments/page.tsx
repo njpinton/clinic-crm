@@ -24,23 +24,32 @@ export default function AppointmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize] = useState(50); // Match backend PAGE_SIZE
   const [deleting, setDeleting] = useState<string | null>(null);
 
-  // Fetch appointments
+  // Fetch appointments with pagination
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      const params = new URLSearchParams();
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      params.append('page', String(page));
+      params.append('page_size', String(pageSize));
+
       const response = await getAppointments({
         status: statusFilter === 'all' ? undefined : statusFilter,
       });
       setAppointments(response.results || []);
+      setTotalCount(response.count);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load appointments');
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, page, pageSize]);
 
   useEffect(() => {
     if (user) {
@@ -321,10 +330,38 @@ export default function AppointmentsPage() {
           </div>
         )}
 
+        {/* Pagination Controls */}
+        {!loading && totalCount > pageSize && (
+          <div className="mt-8 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing page {page} of {Math.ceil(totalCount / pageSize)} ({totalCount} total appointments)
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="px-4 py-2 text-gray-700 font-medium">
+                Page {page}
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page >= Math.ceil(totalCount / pageSize)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Stats Footer */}
         {!loading && appointments.length > 0 && (
           <div className="mt-6 text-sm text-gray-600">
-            Showing {filteredAppointments.length} of {appointments.length} appointments
+            Showing {filteredAppointments.length} of {appointments.length} appointments on page {page}
           </div>
         )}
       </div>

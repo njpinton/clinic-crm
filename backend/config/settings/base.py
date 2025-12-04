@@ -56,6 +56,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Performance monitoring and error tracking
+    'apps.core.monitoring_middleware.PerformanceMonitoringMiddleware',
+    'apps.core.monitoring_middleware.ErrorTrackingMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -165,6 +168,15 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Rate limiting for production security
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',        # Anonymous users: 100 requests per hour
+        'user': '1000/hour',       # Authenticated users: 1000 requests per hour
+    },
 }
 
 # JWT Settings
@@ -268,6 +280,29 @@ def scrub_sensitive_data(event, hint):
                 event['extra'][field] = '[FILTERED]'
 
     return event
+
+# Redis Caching Configuration
+# Supports both local development (via Django's locmem backend fallback)
+# and production (via Redis)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'socket_connect_timeout': 5,
+                'socket_timeout': 5,
+                'socket_keepalive': True,
+            },
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,  # Fallback to database if Redis unavailable
+        },
+        'KEY_PREFIX': 'clinic_crm',
+        'TIMEOUT': 86400,  # 24 hour default TTL
+    }
+}
 
 # Initialize Sentry
 SENTRY_DSN = os.environ.get('SENTRY_DSN')

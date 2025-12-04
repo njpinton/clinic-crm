@@ -20,6 +20,10 @@ whitenoise==6.6.0
 # Error tracking
 sentry-sdk==1.38.0
 
+# Caching
+redis==5.0.1
+django-redis==5.4.0
+
 # Production server
 gunicorn==21.2.0
 

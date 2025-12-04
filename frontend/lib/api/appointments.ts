@@ -79,6 +79,8 @@ export interface AvailableSlot {
 
 export interface AppointmentsResponse {
   count: number;
+  next: string | null;
+  previous: string | null;
   results: Appointment[];
 }
 
