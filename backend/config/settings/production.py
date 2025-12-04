@@ -43,20 +43,38 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Override database configuration for production
-# This ensures we use the correct database even if environment variables suggest otherwise
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'clinic',
-        'USER': 'postgres',
-        'PASSWORD': 'ClinicCRM2025!Secure',
-        'HOST': '35.188.144.52',
-        'PORT': '5432',
-        'CONN_MAX_AGE': 600,
-        'CONN_HEALTH_CHECKS': True,
+# Production database configuration
+# Supports Cloud SQL Proxy (Unix socket) and direct TCP connections
+CLOUD_SQL_CONNECTION_NAME = os.environ.get('CLOUD_SQL_CONNECTION_NAME')
+
+if CLOUD_SQL_CONNECTION_NAME:
+    # Cloud SQL via Unix socket (Cloud Run with Cloud SQL Proxy)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'clinic'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': f'/cloudsql/{CLOUD_SQL_CONNECTION_NAME}',
+            'PORT': '',
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
     }
-}
+else:
+    # Direct TCP connection (for development or alternative deployments)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DB_NAME', 'clinic'),
+            'USER': os.environ.get('DB_USER', 'postgres'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', '35.188.144.52'),
+            'PORT': os.environ.get('DB_PORT', '5432'),
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
+    }
 
 # Sentry error tracking
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
