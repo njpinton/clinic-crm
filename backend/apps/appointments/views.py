@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 import sentry_sdk
 
-from .models import Appointment, AppointmentReminder
+from .models import Appointment, AppointmentReminder, DoctorSchedule
 from .serializers import (
     AppointmentSerializer,
     AppointmentListSerializer,
@@ -20,6 +20,7 @@ from .serializers import (
     AppointmentCancelSerializer,
     AppointmentRescheduleSerializer,
     AppointmentReminderSerializer,
+    DoctorScheduleSerializer,
 )
 from .permissions import (
     CanAccessAppointment,
@@ -961,5 +962,104 @@ class AppointmentReminderViewSet(viewsets.ModelViewSet):
             sentry_sdk.capture_exception(e)
             return Response(
                 {'detail': 'Error creating reminder.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class DoctorScheduleViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing doctor working schedules.
+
+    Permissions:
+    - Admins/Receptionists: Full access to manage all schedules
+    - Doctors: Can view/edit their own schedules
+    - Others: Read-only access
+    """
+    queryset = DoctorSchedule.objects.all()
+    serializer_class = DoctorScheduleSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['doctor', 'day_of_week', 'is_available']
+    ordering_fields = ['day_of_week', 'start_time']
+    ordering = ['day_of_week', 'start_time']
+
+    def list(self, request, *args, **kwargs):
+        """List doctor schedules."""
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error retrieving schedules.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Create a new schedule."""
+        try:
+            response = super().create(request, *args, **kwargs)
+
+            if response.status_code == status.HTTP_201_CREATED:
+                log_phi_access(
+                    user=request.user,
+                    action='CREATE',
+                    resource_type='DoctorSchedule',
+                    resource_id=str(response.data.get('id')),
+                    request=request,
+                    details=f"Created schedule for doctor {request.data.get('doctor')}"
+                )
+
+            return response
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error creating schedule.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def update(self, request, *args, **kwargs):
+        """Update an existing schedule."""
+        try:
+            response = super().update(request, *args, **kwargs)
+
+            if response.status_code in [status.HTTP_200_OK, status.HTTP_202_ACCEPTED]:
+                log_phi_access(
+                    user=request.user,
+                    action='UPDATE',
+                    resource_type='DoctorSchedule',
+                    resource_id=str(response.data.get('id')),
+                    request=request,
+                    details=f"Updated schedule for doctor {request.data.get('doctor')}"
+                )
+
+            return response
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error updating schedule.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete a schedule."""
+        try:
+            schedule_id = kwargs.get('pk')
+            response = super().destroy(request, *args, **kwargs)
+
+            if response.status_code == status.HTTP_204_NO_CONTENT:
+                log_phi_access(
+                    user=request.user,
+                    action='DELETE',
+                    resource_type='DoctorSchedule',
+                    resource_id=str(schedule_id),
+                    request=request,
+                    details='Deleted doctor schedule'
+                )
+
+            return response
+        except Exception as e:
+            sentry_sdk.capture_exception(e)
+            return Response(
+                {'detail': 'Error deleting schedule.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
