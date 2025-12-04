@@ -2,33 +2,79 @@ import { ApiError } from './patients';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no-show';
-export type AppointmentType = 'consultation' | 'follow-up' | 'check-up' | 'lab-work' | 'procedure' | 'emergency';
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'in_progress' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
+export type AppointmentType = 'consultation' | 'follow_up' | 'procedure' | 'lab_work' | 'vaccination' | 'physical_exam' | 'emergency' | 'telemedicine';
+export type Urgency = 'routine' | 'urgent' | 'emergency';
 
 export interface Appointment {
   id: string;
-  patientId: string;
-  patientName: string;
-  doctorId: string;
-  doctorName: string;
-  dateTime: string; // ISO string
-  type: AppointmentType;
+  patient: string;
+  patient_name: string;
+  patient_email: string;
+  patient_phone: string;
+  doctor: string;
+  doctor_name: string;
+  doctor_email: string;
+  doctor_specializations: string[];
+  appointment_datetime: string; // ISO string
+  end_datetime: string;
+  duration_minutes: number;
+  appointment_type: AppointmentType;
+  appointment_type_display: string;
   status: AppointmentStatus;
+  status_display: string;
+  urgency: Urgency;
+  is_walk_in: boolean;
+  reason: string;
   notes?: string;
-  duration: number; // minutes
-  location?: string;
-  reminderEnabled: boolean;
+  checked_in_at?: string;
+  checked_out_at?: string;
+  cancelled_at?: string;
+  cancelled_by?: string;
+  cancelled_by_name?: string;
+  cancellation_reason?: string;
+  rescheduled_from?: string;
+  rescheduled_from_id?: string;
+  reminder_sent: boolean;
+  reminder_sent_at?: string;
+  is_upcoming: boolean;
+  is_today: boolean;
+  is_past: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface DoctorSchedule {
+  id: string;
+  doctor: string;
+  doctor_name: string;
+  day_of_week: number;
+  day_of_week_display: string;
+  start_time: string;
+  end_time: string;
+  break_start?: string;
+  break_end?: string;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AppointmentCreatePayload {
-  patientId: string;
-  doctorId: string;
-  dateTime: string;
-  type: AppointmentType;
-  duration?: number;
+  patient: string;
+  doctor: string;
+  appointment_datetime: string;
+  duration_minutes?: number;
+  appointment_type: AppointmentType;
+  urgency?: Urgency;
+  is_walk_in?: boolean;
+  reason: string;
   notes?: string;
-  location?: string;
-  reminderEnabled?: boolean;
+}
+
+export interface AvailableSlot {
+  datetime: string;
+  duration_minutes: number;
 }
 
 export interface AppointmentsResponse {
@@ -36,146 +82,99 @@ export interface AppointmentsResponse {
   results: Appointment[];
 }
 
-// Mock data for appointments
-const mockAppointments: Appointment[] = [
-  {
-    id: '1',
-    patientId: 'patient-1',
-    patientName: 'John Doe',
-    doctorId: 'doctor-1',
-    doctorName: 'Dr. Sarah Johnson',
-    dateTime: new Date(Date.now() + 2 * 3600000).toISOString(),
-    type: 'consultation',
-    status: 'scheduled',
-    notes: 'Initial consultation for back pain',
-    duration: 30,
-    location: 'Room 101',
-    reminderEnabled: true
-  },
-  {
-    id: '2',
-    patientId: 'patient-2',
-    patientName: 'Jane Smith',
-    doctorId: 'doctor-2',
-    doctorName: 'Dr. Michael Chen',
-    dateTime: new Date(Date.now() + 4 * 3600000).toISOString(),
-    type: 'follow-up',
-    status: 'confirmed',
-    notes: 'Follow-up after surgery',
-    duration: 20,
-    location: 'Room 205',
-    reminderEnabled: true
-  },
-  {
-    id: '3',
-    patientId: 'patient-3',
-    patientName: 'Robert Williams',
-    doctorId: 'doctor-1',
-    doctorName: 'Dr. Sarah Johnson',
-    dateTime: new Date(Date.now() + 24 * 3600000).toISOString(),
-    type: 'check-up',
-    status: 'scheduled',
-    notes: 'Annual physical exam',
-    duration: 45,
-    location: 'Room 101',
-    reminderEnabled: true
-  },
-  {
-    id: '4',
-    patientId: 'patient-4',
-    patientName: 'Maria Garcia',
-    doctorId: 'doctor-2',
-    doctorName: 'Dr. Michael Chen',
-    dateTime: new Date(Date.now() + 48 * 3600000).toISOString(),
-    type: 'lab-work',
-    status: 'scheduled',
-    notes: 'Blood tests and lab work',
-    duration: 30,
-    location: 'Lab Area',
-    reminderEnabled: true
-  },
-  {
-    id: '5',
-    patientId: 'patient-5',
-    patientName: 'David Lee',
-    doctorId: 'doctor-1',
-    doctorName: 'Dr. Sarah Johnson',
-    dateTime: new Date(Date.now() + 72 * 3600000).toISOString(),
-    type: 'consultation',
-    status: 'scheduled',
-    notes: 'Consultation for joint pain',
-    duration: 30,
-    location: 'Room 101',
-    reminderEnabled: false
-  },
-  {
-    id: '6',
-    patientId: 'patient-6',
-    patientName: 'Lisa Anderson',
-    doctorId: 'doctor-3',
-    doctorName: 'Dr. Emily Brown',
-    dateTime: new Date(Date.now() - 2 * 3600000).toISOString(),
-    type: 'check-up',
-    status: 'completed',
-    notes: 'Regular check-up',
-    duration: 30,
-    location: 'Room 302',
-    reminderEnabled: true
-  }
-];
+export interface AvailabilityResponse {
+  doctor_id: string;
+  date: string;
+  duration_minutes: number;
+  slots: string[]; // ISO datetimes
+}
 
+export interface ConflictCheckResponse {
+  has_conflict: boolean;
+  conflicting_appointments?: Appointment[];
+}
+
+/**
+ * Get all appointments with optional filtering
+ */
 export async function getAppointments(options?: {
   token?: string;
-  startDate?: Date;
-  endDate?: Date;
-  doctorId?: string;
-  patientId?: string;
+  status?: AppointmentStatus;
+  doctor_id?: string;
+  patient_id?: string;
 }): Promise<AppointmentsResponse> {
   try {
     const token = options?.token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
-    // Filter mock data based on options
-    let filtered = [...mockAppointments];
+    const params = new URLSearchParams();
+    if (options?.status) params.append('status', options.status);
+    if (options?.doctor_id) params.append('doctor', options.doctor_id);
+    if (options?.patient_id) params.append('patient', options.patient_id);
 
-    if (options?.startDate) {
-      const start = options.startDate.getTime();
-      filtered = filtered.filter(a => new Date(a.dateTime).getTime() >= start);
+    const response = await fetch(`${API_BASE_URL}/api/appointments/?${params}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
+      },
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to fetch appointments: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
     }
 
-    if (options?.endDate) {
-      const end = options.endDate.getTime();
-      filtered = filtered.filter(a => new Date(a.dateTime).getTime() <= end);
-    }
-
-    if (options?.doctorId) {
-      filtered = filtered.filter(a => a.doctorId === options.doctorId);
-    }
-
-    if (options?.patientId) {
-      filtered = filtered.filter(a => a.patientId === options.patientId);
-    }
-
-    return {
-      count: filtered.length,
-      results: filtered.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime())
-    };
+    return response.json();
   } catch (error) {
-    // Return mock data if API fails
-    return {
-      count: mockAppointments.length,
-      results: mockAppointments
-    };
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to fetch appointments',
+      500,
+      { error: String(error) }
+    );
   }
 }
 
+/**
+ * Get a single appointment by ID
+ */
 export async function getAppointment(id: string, token?: string): Promise<Appointment> {
-  const appointment = mockAppointments.find(a => a.id === id);
-  if (!appointment) {
-    throw new ApiError(`Appointment ${id} not found`, 404, {});
+  try {
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+
+    const response = await fetch(`${API_BASE_URL}/api/appointments/${id}/`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { Authorization: `Bearer ${authToken}` })
+      },
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to fetch appointment: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to fetch appointment',
+      500,
+      { error: String(error) }
+    );
   }
-  return appointment;
 }
 
+/**
+ * Create a new appointment
+ */
 export async function createAppointment(
   payload: AppointmentCreatePayload,
   token?: string
@@ -203,29 +202,18 @@ export async function createAppointment(
 
     return response.json();
   } catch (error) {
-    // For demo purposes, create a mock appointment
-    if (error instanceof ApiError && error.status === 404) {
-      const newAppointment: Appointment = {
-        id: `appt-${Date.now()}`,
-        patientId: payload.patientId,
-        patientName: 'New Patient',
-        doctorId: payload.doctorId,
-        doctorName: 'Selected Doctor',
-        dateTime: payload.dateTime,
-        type: payload.type,
-        status: 'scheduled',
-        notes: payload.notes,
-        duration: payload.duration || 30,
-        location: payload.location,
-        reminderEnabled: payload.reminderEnabled ?? true
-      };
-      mockAppointments.push(newAppointment);
-      return newAppointment;
-    }
-    throw error;
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to create appointment',
+      500,
+      { error: String(error) }
+    );
   }
 }
 
+/**
+ * Update an appointment
+ */
 export async function updateAppointment(
   id: string,
   payload: Partial<AppointmentCreatePayload>,
@@ -235,7 +223,7 @@ export async function updateAppointment(
     const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
     const response = await fetch(`${API_BASE_URL}/api/appointments/${id}/`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
         ...(authToken && { Authorization: `Bearer ${authToken}` })
@@ -254,19 +242,18 @@ export async function updateAppointment(
 
     return response.json();
   } catch (error) {
-    // For demo purposes, update mock appointment
-    const index = mockAppointments.findIndex(a => a.id === id);
-    if (index !== -1) {
-      mockAppointments[index] = {
-        ...mockAppointments[index],
-        ...payload
-      } as Appointment;
-      return mockAppointments[index];
-    }
-    throw error;
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to update appointment',
+      500,
+      { error: String(error) }
+    );
   }
 }
 
+/**
+ * Delete an appointment
+ */
 export async function deleteAppointment(id: string, token?: string): Promise<void> {
   try {
     const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
@@ -287,49 +274,206 @@ export async function deleteAppointment(id: string, token?: string): Promise<voi
       );
     }
   } catch (error) {
-    // For demo purposes, remove from mock data
-    const index = mockAppointments.findIndex(a => a.id === id);
-    if (index !== -1) {
-      mockAppointments.splice(index, 1);
-    }
-    throw error;
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to delete appointment',
+      500,
+      { error: String(error) }
+    );
   }
 }
 
-export async function getUpcomingAppointments(
-  days: number = 30,
-  token?: string
-): Promise<Appointment[]> {
-  const startDate = new Date();
-  const endDate = new Date();
-  endDate.setDate(endDate.getDate() + days);
-
-  const response = await getAppointments({ token, startDate, endDate });
-  return response.results.filter(a => a.status !== 'cancelled');
-}
-
-export async function checkSchedulingConflicts(
+/**
+ * Get available appointment slots for a doctor on a specific date
+ */
+export async function getAvailableSlots(
   doctorId: string,
-  dateTime: string,
-  duration: number = 30,
+  date: string,
+  durationMinutes: number = 30,
   token?: string
-): Promise<boolean> {
-  const appointmentTime = new Date(dateTime);
-  const appointmentEndTime = new Date(appointmentTime.getTime() + duration * 60000);
+): Promise<AvailableSlot[]> {
+  try {
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
 
-  const doctorAppointments = mockAppointments.filter(
-    a => a.doctorId === doctorId && a.status !== 'cancelled'
-  );
+    const params = new URLSearchParams({
+      doctor_id: doctorId,
+      date,
+      duration_minutes: String(durationMinutes)
+    });
 
-  for (const appt of doctorAppointments) {
-    const existingStart = new Date(appt.dateTime);
-    const existingEnd = new Date(existingStart.getTime() + appt.duration * 60000);
+    const response = await fetch(`${API_BASE_URL}/api/appointments/availability/?${params}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { Authorization: `Bearer ${authToken}` })
+      },
+      cache: 'no-cache'
+    });
 
-    // Check if time slots overlap
-    if (appointmentTime < existingEnd && appointmentEndTime > existingStart) {
-      return true; // Conflict found
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to fetch available slots: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
     }
-  }
 
-  return false; // No conflicts
+    const data = await response.json();
+    return (data.slots || []).map((slot: string) => ({
+      datetime: slot,
+      duration_minutes: durationMinutes
+    }));
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to fetch available slots',
+      500,
+      { error: String(error) }
+    );
+  }
+}
+
+/**
+ * Check if an appointment time conflicts with existing appointments
+ */
+export async function checkConflict(
+  doctorId: string,
+  appointmentDatetime: string,
+  durationMinutes: number = 30,
+  token?: string
+): Promise<ConflictCheckResponse> {
+  try {
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+
+    const params = new URLSearchParams({
+      doctor_id: doctorId,
+      datetime: appointmentDatetime,
+      duration_minutes: String(durationMinutes)
+    });
+
+    const response = await fetch(`${API_BASE_URL}/api/appointments/check-conflict/?${params}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { Authorization: `Bearer ${authToken}` })
+      },
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to check conflict: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to check conflict',
+      500,
+      { error: String(error) }
+    );
+  }
+}
+
+/**
+ * Get upcoming appointments
+ */
+export async function getUpcomingAppointments(token?: string): Promise<Appointment[]> {
+  try {
+    const response = await getAppointments({
+      token,
+      status: 'scheduled'
+    });
+
+    return response.results.filter(a => a.is_upcoming);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to fetch upcoming appointments',
+      500,
+      { error: String(error) }
+    );
+  }
+}
+
+/**
+ * Get doctor schedules
+ */
+export async function getDoctorSchedules(
+  doctorId?: string,
+  token?: string
+): Promise<DoctorSchedule[]> {
+  try {
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+
+    const params = new URLSearchParams();
+    if (doctorId) params.append('doctor', doctorId);
+
+    const response = await fetch(`${API_BASE_URL}/api/schedules/?${params}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { Authorization: `Bearer ${authToken}` })
+      },
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to fetch schedules: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
+    }
+
+    const data = await response.json();
+    return data.results || [];
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to fetch schedules',
+      500,
+      { error: String(error) }
+    );
+  }
+}
+
+/**
+ * Create doctor schedule
+ */
+export async function createDoctorSchedule(
+  schedule: Omit<DoctorSchedule, 'id' | 'created_at' | 'updated_at' | 'doctor_name'>,
+  token?: string
+): Promise<DoctorSchedule> {
+  try {
+    const authToken = token || (typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null);
+
+    const response = await fetch(`${API_BASE_URL}/api/schedules/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(authToken && { Authorization: `Bearer ${authToken}` })
+      },
+      body: JSON.stringify(schedule),
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new ApiError(
+        `Failed to create schedule: ${response.statusText}`,
+        response.status,
+        await response.json().catch(() => ({}))
+      );
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(
+      'Failed to create schedule',
+      500,
+      { error: String(error) }
+    );
+  }
 }
